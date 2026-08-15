@@ -1,3 +1,5 @@
+import { BookX } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { StatTile } from "@/components/StatTile";
 
@@ -45,6 +47,14 @@ export default function KardexPage() {
         <StatTile label="Créditos totales" value={186} />
       </div>
 
+      {ROWS.length === 0 ? (
+        <EmptyState
+          icon={BookX}
+          title="Todavía no hay kardex disponible"
+          description="Cuando el portal escolar tenga datos de tu historial académico, aparecerán aquí."
+        />
+      ) : (
+        <>
       {/* Mobile: lista apilada */}
       <div className="flex flex-col gap-3 sm:hidden">
         {ROWS.map((row) => (
@@ -116,6 +126,8 @@ export default function KardexPage() {
           </tbody>
         </table>
       </div>
+        </>
+      )}
     </>
   );
 }

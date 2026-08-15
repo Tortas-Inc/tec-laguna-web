@@ -1,3 +1,5 @@
+import { ClipboardX } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { StatTile } from "@/components/StatTile";
 
@@ -37,6 +39,14 @@ export default function CalificacionesPage() {
         <StatTile label="Promedio semestral" value={8.7} decimals={1} />
       </div>
 
+      {ROWS.length === 0 ? (
+        <EmptyState
+          icon={ClipboardX}
+          title="Todavía no hay calificaciones"
+          description="Cuando el portal escolar publique tus calificaciones del semestre, aparecerán aquí."
+        />
+      ) : (
+        <>
       {/* Mobile: lista apilada */}
       <div className="flex flex-col gap-3 sm:hidden">
         {ROWS.map((row) => (
@@ -108,6 +118,8 @@ export default function CalificacionesPage() {
           </tbody>
         </table>
       </div>
+        </>
+      )}
     </>
   );
 }

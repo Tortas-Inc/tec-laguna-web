@@ -1,3 +1,5 @@
+import { CalendarX } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 
 const DAYS = ["Lun", "Mar", "Mié", "Jue", "Vie"];
@@ -27,10 +29,22 @@ const TIME_SLOTS: { time: string; classes: ClassBlock[] }[] = [
 ];
 
 export default function HorarioPage() {
+  const hasAnyClass = TIME_SLOTS.some(({ classes }) =>
+    classes.some((c) => c !== null),
+  );
+
   return (
     <>
       <PageHeader title="Tu horario" subtitle="Bienvenido" />
 
+      {!hasAnyClass ? (
+        <EmptyState
+          icon={CalendarX}
+          title="Todavía no tienes materias registradas"
+          description="Cuando el portal escolar tenga tu carga académica, tu horario semanal aparecerá aquí."
+        />
+      ) : (
+        <>
       {/* Mobile: lista por día */}
       <div className="flex flex-col gap-4 sm:hidden">
         {DAYS_FULL.map((dayLabel, dayIndex) => {
@@ -112,6 +126,8 @@ export default function HorarioPage() {
           ))}
         </div>
       </div>
+        </>
+      )}
     </>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
-import { CalendarDays, CheckCircle2, Search, SlidersHorizontal } from "lucide-react";
+import { CalendarDays, CheckCircle2, Search, SearchX, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
+import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import {
   MateriaDetail,
@@ -137,6 +138,13 @@ export default function HorariosPorCarreraPage() {
         ))}
       </div>
 
+      {SUBJECTS.length === 0 ? (
+        <EmptyState
+          icon={SearchX}
+          title="No encontramos materias"
+          description="Prueba con otro semestre o ajusta los filtros de búsqueda."
+        />
+      ) : (
       <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
         {SUBJECTS.map((subject) => (
           <button
@@ -185,6 +193,7 @@ export default function HorariosPorCarreraPage() {
           </button>
         ))}
       </div>
+      )}
 
       <MateriaDetailDrawer materia={selected} onClose={() => setSelected(null)} />
     </>
