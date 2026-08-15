@@ -1,0 +1,30 @@
+@font-face {
+  font-family: "Product Sans";
+  src: url("/fonts/ProductSans-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Product Sans";
+  src: url("/fonts/ProductSans-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: "Product Sans", ui-sans-serif, -apple-system,
+    "Segoe UI", Roboto, sans-serif;
+  --color-brand-primary: #c38451;
+  --color-brand-primary-dark: #8f5726;
+  --color-brand-primary-tint: rgba(195, 132, 81, 0.1);
+  --color-brand-secondary-tint: #f3e3d5;
+  --color-brand-black: #000000;
+  --color-brand-gray: #5e5e5e;
+  --color-brand-gray-light: #a8a8a8;
+  --color-brand-gray-lighter: #f6f6f6;
+  --color-brand-green: #3f8d43;
+  --color-brand-green-tint: rgba(115, 236, 121, 0.235);
+}
