@@ -26,8 +26,8 @@ export default function LoginPage() {
           />
         </div>
 
-        <h1 className="text-xl font-bold text-brand-black">TEC Laguna</h1>
-        <p className="mb-5 mt-1 text-[12.5px] text-brand-gray">
+        <h1 className="text-2xl font-bold text-brand-black">TEC Laguna</h1>
+        <p className="mb-5 mt-1 text-sm text-brand-gray">
           Inicia sesión para continuar
         </p>
 
@@ -40,7 +40,7 @@ export default function LoginPage() {
           placeholder="Número de control"
           autoComplete="username"
           required
-          className="mb-3 w-full rounded-[10px] bg-brand-primary-tint px-3.5 py-3 text-[13px] text-black outline-none placeholder:text-black/50"
+          className="mb-3 w-full rounded-[10px] bg-brand-primary-tint px-3.5 py-3 text-[15px] text-black outline-none placeholder:text-black/50"
         />
 
         <label htmlFor="password" className="sr-only">
@@ -53,17 +53,17 @@ export default function LoginPage() {
           placeholder="Contraseña"
           autoComplete="current-password"
           required
-          className="mb-3 w-full rounded-[10px] bg-brand-primary-tint px-3.5 py-3 text-[13px] text-black outline-none placeholder:text-black/50"
+          className="mb-3 w-full rounded-[10px] bg-brand-primary-tint px-3.5 py-3 text-[15px] text-black outline-none placeholder:text-black/50"
         />
 
         <button
           type="submit"
-          className="mt-1.5 w-full rounded-[10px] bg-brand-primary py-3.5 text-[13px] font-bold text-white shadow-[0_8px_16px_-6px_rgba(195,132,81,0.5)]"
+          className="mt-1.5 w-full rounded-[10px] bg-brand-primary py-3.5 text-[15px] font-bold text-white shadow-[0_8px_16px_-6px_rgba(195,132,81,0.5)]"
         >
           Iniciar sesión
         </button>
 
-        <p className="mt-3.5 text-center text-[9.5px] leading-relaxed text-brand-gray-light">
+        <p className="mt-3.5 text-center text-[11px] leading-relaxed text-brand-gray-light">
           App independiente, no afiliada al ITL/TecNM.
           <br />
           Tus credenciales nunca se guardan en nuestros servidores.{" "}

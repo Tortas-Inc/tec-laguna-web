@@ -28,3 +28,13 @@
   --color-brand-green: #3f8d43;
   --color-brand-green-tint: rgba(115, 236, 121, 0.235);
 }
+
+@keyframes pulse-ring {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(193, 59, 55, 0.28);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(193, 59, 55, 0);
+  }
+}
