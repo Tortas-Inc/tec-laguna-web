@@ -12,8 +12,8 @@ export default function DashboardLayout({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen flex-col lg:flex-row">
-      <header className="flex items-center gap-3 border-b border-[#ECECEC] px-3 py-2.5 lg:hidden">
+    <div className="flex h-dvh flex-col overflow-hidden lg:flex-row">
+      <header className="flex flex-none items-center gap-3 border-b border-divider px-3 py-2.5 lg:hidden">
         <button
           type="button"
           onClick={() => setMobileOpen(true)}
@@ -27,7 +27,7 @@ export default function DashboardLayout({
 
       <Sidebar mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
 
-      <main className="min-w-0 flex-1 overflow-x-hidden px-4 py-5 sm:px-9 sm:py-7.5">
+      <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-4 pb-5 sm:px-9 sm:pb-7.5 lg:ml-[216px]">
         {children}
       </main>
     </div>

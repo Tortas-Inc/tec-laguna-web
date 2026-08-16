@@ -8,7 +8,11 @@ export function useInstallPrompt() {
   const [platform, setPlatform] = useState<Platform>(null);
 
   useEffect(() => {
+    // Detección de plataforma solo puede correr en cliente (userAgent no
+    // existe en SSR); se hace en el efecto a propósito para evitar un
+    // hydration mismatch entre el render del servidor y el del navegador.
     const ua = window.navigator.userAgent;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (/iPhone|iPad|iPod/.test(ua)) setPlatform("ios");
     else if (/Android/.test(ua)) setPlatform("android");
     else setPlatform("desktop");

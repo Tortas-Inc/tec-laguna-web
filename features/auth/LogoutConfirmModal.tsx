@@ -23,7 +23,7 @@ export function LogoutConfirmModal({
           onClick={onCancel}
         >
           <motion.div
-            className="w-full max-w-[380px] rounded-2xl bg-white p-6.5 shadow-[0_24px_48px_rgba(0,0,0,0.22)]"
+            className="w-full max-w-[380px] rounded-2xl bg-surface p-6.5 shadow-[0_24px_48px_rgba(0,0,0,0.22)]"
             initial={{ scale: 0.94, y: 10, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.94, y: 10, opacity: 0 }}

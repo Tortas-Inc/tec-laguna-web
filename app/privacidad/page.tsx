@@ -10,9 +10,6 @@ export default function PrivacidadPage() {
       <h1 className="text-[28px] font-bold text-brand-black">
         Aviso de privacidad
       </h1>
-      <p className="mt-1 text-sm text-brand-gray">
-        Borrador — pendiente de revisión legal
-      </p>
 
       <div className="mt-6 rounded-xl border border-brand-primary/[0.22] bg-brand-primary-tint px-5 py-4 text-[15px] leading-relaxed text-brand-primary-dark">
         <b>Esta aplicación web es un proyecto independiente</b> creado por y

@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { X } from "lucide-react";
+import { AlertCircle, Repeat2, Trash2, X } from "lucide-react";
 
 export type MateriaDetail = {
   badge: string;
@@ -12,9 +12,21 @@ export type MateriaDetail = {
 export function MateriaDetailDrawer({
   materia,
   onClose,
+  actionLabel,
+  actionVariant = "add",
+  onAction,
+  disclaimer,
+  actionError,
+  onReplace,
 }: {
   materia: MateriaDetail | null;
   onClose: () => void;
+  actionLabel?: string;
+  actionVariant?: "add" | "remove";
+  onAction?: () => void;
+  disclaimer?: string;
+  actionError?: string | null;
+  onReplace?: () => void;
 }) {
   return (
     <AnimatePresence>
@@ -28,7 +40,7 @@ export function MateriaDetailDrawer({
           onClick={onClose}
         >
           <motion.div
-            className="relative h-full w-full max-w-[380px] overflow-y-auto bg-white p-7 shadow-[-14px_0_34px_rgba(0,0,0,0.16)]"
+            className="relative h-full w-full max-w-[380px] overflow-y-auto bg-surface p-7 shadow-[-14px_0_34px_rgba(0,0,0,0.16)]"
             initial={{ x: 40, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 40, opacity: 0 }}
@@ -65,12 +77,62 @@ export function MateriaDetailDrawer({
               ))}
             </div>
 
-            <button
-              type="button"
-              className="mt-5 w-full rounded-[10px] bg-brand-primary py-3.5 text-sm font-bold text-white transition-[transform,filter] duration-150 motion-safe:hover:-translate-y-0.5 hover:brightness-[1.07]"
-            >
-              Eliminar materia
-            </button>
+            {disclaimer ? (
+              <p className="mt-4 text-xs leading-relaxed text-brand-gray-light">
+                {disclaimer}
+              </p>
+            ) : null}
+
+            <AnimatePresence>
+              {actionError ? (
+                <motion.div
+                  initial={{ opacity: 0, y: -6, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: "auto" }}
+                  exit={{ opacity: 0, y: -6, height: 0 }}
+                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  className="mt-4 overflow-hidden rounded-[10px] bg-danger-tint"
+                >
+                  <div className="px-3.5 py-2.5">
+                    <div className="flex items-center gap-2 text-[13px] font-semibold text-danger">
+                      <AlertCircle
+                        className="h-4 w-4 flex-none"
+                        strokeWidth={2}
+                      />
+                      {actionError}
+                    </div>
+                    {onReplace ? (
+                      <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.95 }}
+                        onClick={onReplace}
+                        className="mt-2.5 flex items-center gap-1.5 text-[13px] font-bold text-danger transition-colors duration-150 hover:text-danger-dark"
+                      >
+                        <Repeat2 className="h-4 w-4" strokeWidth={2.2} />
+                        Reemplazar
+                      </motion.button>
+                    ) : null}
+                  </div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            {actionLabel && onAction ? (
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.97 }}
+                onClick={onAction}
+                className={`mt-5 flex w-full items-center justify-center gap-2 rounded-[10px] py-3.5 text-sm font-bold text-white transition-[transform,filter] duration-150 motion-safe:hover:-translate-y-0.5 hover:brightness-[1.07] ${
+                  actionVariant === "remove"
+                    ? "bg-danger"
+                    : "bg-brand-primary"
+                }`}
+              >
+                {actionVariant === "remove" ? (
+                  <Trash2 className="h-4 w-4" strokeWidth={2} />
+                ) : null}
+                {actionLabel}
+              </motion.button>
+            ) : null}
           </motion.div>
         </motion.div>
       ) : null}

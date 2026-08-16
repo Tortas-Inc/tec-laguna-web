@@ -5,7 +5,7 @@ import { TriangleAlert } from "lucide-react";
 export default function HorariosError({ reset }: { reset: () => void }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-1.5 px-10 py-15 text-center">
-      <div className="mb-3.5 flex h-17 w-17 items-center justify-center rounded-full bg-[#C13B37]/10 text-[#C13B37] motion-safe:animate-[pulse-ring_2.4s_ease-in-out_infinite]">
+      <div className="mb-3.5 flex h-17 w-17 items-center justify-center rounded-full bg-danger-tint text-danger motion-safe:animate-[pulse-ring_2.4s_ease-in-out_infinite]">
         <TriangleAlert className="h-8 w-8" strokeWidth={1.7} />
       </div>
       <div className="text-lg font-bold text-brand-black">
