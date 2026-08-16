@@ -61,6 +61,9 @@ export async function fetchHorario(sessionId: string): Promise<HorarioResult> {
       headers: { Cookie: itlCookieHeader(sessionId) },
     },
   );
+  if (!res.ok) {
+    throw new Error(`El portal ITL respondió ${res.status}`);
+  }
   const html = await res.text();
   return parseHorario(html);
 }

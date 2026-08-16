@@ -4,18 +4,18 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  color-scheme: light;
+}
+
+.dark {
+  --background: #121212;
+  --foreground: #ededed;
+  color-scheme: dark;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
@@ -26,4 +26,18 @@ body {
 
 button:not(:disabled) {
   cursor: pointer;
+}
+
+/* Transición suave de light↔dark: solo en fondos/bordes. El color de texto
+   se excluye a propósito — con tantos nodos de texto en pantalla, el
+   navegador no los repinta exactamente al mismo tiempo que los fondos y
+   se ve como si el texto "se quedara atrás" del cambio de color. */
+@media (prefers-reduced-motion: no-preference) {
+  *:not(svg, svg *),
+  *::before,
+  *::after {
+    transition-property: background-color, border-color;
+    transition-duration: 300ms;
+    transition-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
 }

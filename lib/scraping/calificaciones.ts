@@ -63,6 +63,9 @@ export async function fetchCalificaciones(
     `${ITL_STATUS_BASE}/alumnos/frmCargaAcademicaCal.aspx`,
     { headers: { Cookie: itlCookieHeader(sessionId) } },
   );
+  if (!res.ok) {
+    throw new Error(`El portal ITL respondió ${res.status}`);
+  }
   const html = await res.text();
   return parseCalificaciones(html);
 }

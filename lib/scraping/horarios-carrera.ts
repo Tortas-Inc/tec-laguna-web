@@ -66,5 +66,8 @@ export async function fetchHorariosCarreraHtml(
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: form.toString(),
   });
+  if (!res.ok) {
+    throw new Error(`El portal ITL respondió ${res.status}`);
+  }
   return res.text();
 }

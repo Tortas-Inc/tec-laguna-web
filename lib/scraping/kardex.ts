@@ -85,6 +85,9 @@ export async function fetchKardex(sessionId: string): Promise<KardexResult> {
   const res = await fetch(`${ITL_STATUS_BASE}/alumnos/frmKardex.aspx`, {
     headers: { Cookie: itlCookieHeader(sessionId) },
   });
+  if (!res.ok) {
+    throw new Error(`El portal ITL respondió ${res.status}`);
+  }
   const html = await res.text();
   return parseKardex(html);
 }

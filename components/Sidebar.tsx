@@ -1,6 +1,7 @@
 "use client";
 
 import { LogoutConfirmModal } from "@/features/auth/LogoutConfirmModal";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Award, BookOpen, Home, Layers, LogOut, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -34,22 +35,28 @@ export function Sidebar({
       ) : null}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-[260px] flex-none flex-col bg-brand-gray-lighter px-3.5 py-5.5 transition-transform duration-300 ease-out lg:static lg:z-auto lg:w-[216px] lg:translate-x-0 lg:border-r lg:border-[#ECECEC] ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-[260px] flex-none flex-col overflow-y-auto bg-brand-gray-lighter px-3.5 py-5.5 transition-transform duration-300 ease-out lg:w-[216px] lg:translate-x-0 lg:border-r lg:border-divider ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="mb-7 flex items-center justify-between px-2.5">
-          <span className="text-xl font-bold text-brand-black">
-            TEC Laguna
-          </span>
-          <button
-            type="button"
-            onClick={onCloseMobile}
-            aria-label="Cerrar menú"
-            className="text-brand-gray lg:hidden"
-          >
-            <X className="h-5 w-5" strokeWidth={1.7} />
-          </button>
+        <div className="mb-7 px-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xl font-bold text-brand-black">
+              TEC Laguna
+            </span>
+            <button
+              type="button"
+              onClick={onCloseMobile}
+              aria-label="Cerrar menú"
+              className="text-brand-gray lg:hidden"
+            >
+              <X className="h-5 w-5" strokeWidth={1.7} />
+            </button>
+          </div>
+          {/* TODO: reemplazar por el número de control real cuando exista sesión (issue #25, sección 3) */}
+          <div className="mt-1 text-xs font-semibold text-brand-primary-dark">
+            20211234
+          </div>
         </div>
 
         <nav className="flex flex-col gap-0.5">
@@ -73,15 +80,17 @@ export function Sidebar({
           })}
         </nav>
 
-        <div className="mt-auto border-t border-[#E9E9E9] px-2.5 pt-3">
-          {/* TODO: reemplazar por el número de control real cuando exista sesión (issue #25, sección 3) */}
-          <div className="text-sm font-bold text-brand-primary-dark">
-            20211234
+        <div className="mt-auto border-t border-divider px-2.5 pt-3">
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-[13.5px] font-semibold text-brand-gray">
+              Modo oscuro
+            </span>
+            <ThemeToggle />
           </div>
           <button
             type="button"
             onClick={() => setLogoutOpen(true)}
-            className="mt-2.5 flex items-center gap-2 text-[13.5px] text-brand-gray transition-colors duration-150 hover:text-brand-primary-dark"
+            className="flex items-center gap-2 text-[13.5px] text-brand-gray transition-colors duration-150 hover:text-brand-primary-dark"
           >
             <LogOut className="h-4 w-4" strokeWidth={1.7} />
             Cerrar sesión
