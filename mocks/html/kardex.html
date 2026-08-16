@@ -1,0 +1,49 @@
+<!--
+  Fixture sintética — respuesta simulada de GET /StatusAlumno/alumnos/frmKardex.aspx
+  Estructura según KardexRepositoryImpl.kt:
+    - Carrera: #MainContent_lblCarrera
+    - Promedio: #MainContent_Label1
+    - Tabla de datos: SEGUNDA tabla del documento (índice 1)
+    - Columnas por posición: clave, materia, creditos(Int), calificacion, periodo1, periodo2, periodo3
+-->
+<!DOCTYPE html>
+<html>
+<head><title>Kardex</title></head>
+<body>
+  <form id="form1">
+    <table id="MainContent_tblHeader">
+      <tr>
+        <td>Carrera: <span id="MainContent_lblCarrera">INGENIERIA EN SISTEMAS COMPUTACIONALES</span></td>
+        <td>Promedio: <span id="MainContent_Label1">9.2</span></td>
+      </tr>
+    </table>
+
+    <table id="MainContent_gvKardex" cellspacing="0" border="1">
+      <tr>
+        <th>Clave</th><th>Materia</th><th>Créditos</th><th>Calificación</th>
+        <th>Periodo 1</th><th>Periodo 2</th><th>Periodo 3</th>
+      </tr>
+      <tr>
+        <td>C11</td><td>TALLER DE ETICA</td><td>4</td><td>92</td>
+        <td>Ago/Dic 2023</td><td>&nbsp;</td><td>&nbsp;</td>
+      </tr>
+      <tr>
+        <td>C14</td><td>CALCULO DIFERENCIAL</td><td>6</td><td>87</td>
+        <td>Ene/Jun 2023</td><td>&nbsp;</td><td>&nbsp;</td>
+      </tr>
+      <tr>
+        <td>C16B</td><td>DESARROLLO EN ANDROID</td><td>5</td><td>95</td>
+        <td>Ago/Dic 2024</td><td>&nbsp;</td><td>&nbsp;</td>
+      </tr>
+      <tr>
+        <td>C31</td><td>ESTRUCTURA DE DATOS</td><td>6</td><td>89</td>
+        <td>Ene/Jun 2024</td><td>&nbsp;</td><td>&nbsp;</td>
+      </tr>
+      <tr>
+        <td>C61</td><td>SISTEMAS OPERATIVOS</td><td>5</td><td>90</td>
+        <td>Ago/Dic 2024</td><td>&nbsp;</td><td>&nbsp;</td>
+      </tr>
+    </table>
+  </form>
+</body>
+</html>

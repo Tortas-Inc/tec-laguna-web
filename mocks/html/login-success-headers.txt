@@ -1,0 +1,14 @@
+Fixture sintética — headers de respuesta simulados de POST /StatusAlumno/login.aspx
+Caso: login exitoso.
+
+El parser real no valida el BODY en el caso exitoso (solo confirma que "lblError" no
+está presente) — lo que importa capturar es el header Set-Cookie de la respuesta de
+*redirect* (302), antes de que se siga el redirect. Ejemplo de esa respuesta HTTP:
+
+HTTP/1.1 302 Found
+Location: /StatusAlumno/alumnos/frmCargaAcademica.aspx
+Set-Cookie: ASP.NET_SessionId=o1u2fh45k9d0mqzslx3vwx45; path=/; HttpOnly
+Content-Length: 0
+
+Valor a extraer para las siguientes llamadas:
+sessionId = "o1u2fh45k9d0mqzslx3vwx45"
