@@ -2,14 +2,22 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 
-export function LogoutConfirmModal({
+export function ConfirmModal({
   open,
+  title,
+  description,
+  confirmLabel,
   onCancel,
   onConfirm,
+  danger = false,
 }: {
   open: boolean;
+  title: string;
+  description: string;
+  confirmLabel: string;
   onCancel: () => void;
   onConfirm: () => void;
+  danger?: boolean;
 }) {
   return (
     <AnimatePresence>
@@ -30,11 +38,9 @@ export function LogoutConfirmModal({
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="text-lg font-bold text-brand-black">
-              Cerrar sesión
-            </div>
+            <div className="text-lg font-bold text-brand-black">{title}</div>
             <p className="mt-1.5 text-sm leading-relaxed text-brand-gray">
-              ¿Estás seguro de que quieres cerrar sesión?
+              {description}
             </p>
             <div className="mt-4.5 flex gap-2.5">
               <button
@@ -47,9 +53,11 @@ export function LogoutConfirmModal({
               <button
                 type="button"
                 onClick={onConfirm}
-                className="flex-1 rounded-[10px] bg-brand-primary py-3 text-sm font-bold text-white transition-[transform,filter] duration-150 motion-safe:hover:-translate-y-0.5 hover:brightness-[1.07]"
+                className={`flex-1 rounded-[10px] py-3 text-sm font-bold text-white transition-[transform,filter] duration-150 motion-safe:hover:-translate-y-0.5 hover:brightness-[1.07] ${
+                  danger ? "bg-danger" : "bg-brand-primary"
+                }`}
               >
-                Cerrar sesión
+                {confirmLabel}
               </button>
             </div>
           </motion.div>

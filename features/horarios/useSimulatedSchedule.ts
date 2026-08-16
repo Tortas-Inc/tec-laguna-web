@@ -72,6 +72,10 @@ export function useSimulatedSchedule() {
     );
   }, []);
 
+  const clear = useCallback(() => {
+    setMaterias([]);
+  }, []);
+
   // Quita la materia en conflicto y agrega la nueva en su lugar (botón
   // "Reemplazar" en el drawer de detalle).
   const replace = useCallback(
@@ -86,5 +90,5 @@ export function useSimulatedSchedule() {
     [],
   );
 
-  return { materias, isAdded, add, remove, replace };
+  return { materias, isAdded, add, remove, replace, clear };
 }
