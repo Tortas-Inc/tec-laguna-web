@@ -2,7 +2,15 @@
 // (scripts/mock-itl-server.mjs) en vez del portal real — el código de
 // scraping (login.ts, horario.ts, etc.) no sabe ni le importa la
 // diferencia, solo hace fetch() contra estas constantes.
-const useMockServer = process.env.MOCK_ITL === "true";
+//
+// El `&& NODE_ENV !== "production"` es a propósito: Next.js fuerza
+// NODE_ENV=production en `next build`/`next start` sin importar qué
+// variables de entorno propias tengas seteadas, así que aunque alguien
+// deje MOCK_ITL=true en las env vars de producción por error, esta
+// bandera nunca se activa ahí — evita que el sitio en vivo intente
+// pegarle a un localhost que no existe.
+const useMockServer =
+  process.env.MOCK_ITL === "true" && process.env.NODE_ENV !== "production";
 const MOCK_SERVER_BASE = `http://localhost:${process.env.MOCK_ITL_PORT ?? "4310"}`;
 
 export const ITL_STATUS_BASE = useMockServer

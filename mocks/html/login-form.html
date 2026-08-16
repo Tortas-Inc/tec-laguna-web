@@ -1,0 +1,29 @@
+<!--
+  Fixture sintética — respuesta simulada de GET /StatusAlumno/login.aspx
+  (formulario inicial, sin error). Usada por el mock server local
+  (scripts/mock-itl-server.mjs) para simular la respuesta que login.ts
+  lee antes de cada intento de login (__VIEWSTATE/__EVENTVALIDATION frescos).
+-->
+<!DOCTYPE html>
+<html>
+<head><title>Sistema de Control Escolar</title></head>
+<body>
+  <form id="form1" action="login.aspx" method="post">
+    <div>
+      <input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="mock-viewstate" />
+      <input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="mock-eventvalidation" />
+    </div>
+    <table>
+      <tr>
+        <td>Número de control:</td>
+        <td><input name="tbLogin" type="text" id="tbLogin" /></td>
+      </tr>
+      <tr>
+        <td>Contraseña:</td>
+        <td><input name="tbPassword" type="password" id="tbPassword" /></td>
+      </tr>
+    </table>
+    <input type="submit" name="Button2" value="Ingresar" id="Button2" />
+  </form>
+</body>
+</html>

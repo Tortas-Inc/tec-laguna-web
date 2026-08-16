@@ -1,7 +1,7 @@
-// Muestras de HTML committeadas junto al código, para que los tests sean
-// autocontenidos y no dependan de fixtures/ (esa carpeta es solo para
-// mocks locales de desarrollo y no se sube al repo). La estructura de
-// estas muestras replica la de los *RepositoryImpl.kt de tec-laguna-android.
+// Muestras de HTML embebidas junto al código (no leídas de mocks/) para
+// que los tests corran igual sin filesystem ni el mock server levantado.
+// La estructura de estas muestras replica la de los *RepositoryImpl.kt
+// de tec-laguna-android.
 
 export const HORARIO_HTML = `
 <!DOCTYPE html>

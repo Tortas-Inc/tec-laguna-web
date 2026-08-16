@@ -1,0 +1,58 @@
+<!--
+  Fixture sintética — respuesta simulada de POST /StatusAlumno/alumnos/frmCargaAcademica.aspx
+  Estructura según HorarioRepositoryImpl.kt:
+    - Nombre del alumno: #MainContent_lblNombre
+    - Tabla de datos: SEGUNDA tabla del documento (índice 1)
+    - Columnas por posición: grupo, materia, profesor, lunes, martes, miercoles, jueves, viernes
+  7 materias, una por hora (07:00-14:00, todas de 1h en punto, sin
+  traslapes — un alumno no puede tener dos materias a la misma hora),
+  cada una mínimo 4 días a la semana, como una carga real de semestre.
+-->
+<!DOCTYPE html>
+<html>
+<head><title>Carga Académica</title></head>
+<body>
+  <form id="form1">
+    <table id="MainContent_tblHeader">
+      <tr>
+        <td>Alumno: <span id="MainContent_lblNombre">Ana García López</span></td>
+      </tr>
+    </table>
+
+    <table id="MainContent_gvHorario" cellspacing="0" border="1">
+      <tr>
+        <th>Grupo</th><th>Materia</th><th>Profesor</th>
+        <th>Lunes</th><th>Martes</th><th>Miércoles</th><th>Jueves</th><th>Viernes</th>
+      </tr>
+      <tr>
+        <td>C16B</td><td>DESARROLLO EN ANDROID</td><td>GIL VAZQUEZ LUIS FERNANDO</td>
+        <td>&nbsp;</td><td>07:00-08:00/19K</td><td>07:00-08:00/19K</td><td>07:00-08:00/19K</td><td>07:00-08:00/19K</td>
+      </tr>
+      <tr>
+        <td>C11A</td><td>BASES DE DATOS II</td><td>MARTINEZ SOTO ELENA</td>
+        <td>08:00-09:00/12B</td><td>&nbsp;</td><td>08:00-09:00/12B</td><td>08:00-09:00/12B</td><td>08:00-09:00/12B</td>
+      </tr>
+      <tr>
+        <td>C09C</td><td>INGENIERIA DE SOFTWARE</td><td>RAMIREZ CASTRO JORGE</td>
+        <td>09:00-10:00/08A</td><td>09:00-10:00/08A</td><td>&nbsp;</td><td>09:00-10:00/08A</td><td>09:00-10:00/08A</td>
+      </tr>
+      <tr>
+        <td>C14A</td><td>CALCULO DIFERENCIAL</td><td>RAMIREZ CASTRO JORGE</td>
+        <td>10:00-11:00/05C</td><td>10:00-11:00/05C</td><td>10:00-11:00/05C</td><td>&nbsp;</td><td>10:00-11:00/05C</td>
+      </tr>
+      <tr>
+        <td>C11</td><td>TALLER DE ETICA</td><td>MARTINEZ SOTO ELENA</td>
+        <td>11:00-12:00/03A</td><td>11:00-12:00/03A</td><td>11:00-12:00/03A</td><td>11:00-12:00/03A</td><td>&nbsp;</td>
+      </tr>
+      <tr>
+        <td>C18B</td><td>REDES DE COMPUTADORAS</td><td>GIL VAZQUEZ LUIS FERNANDO</td>
+        <td>&nbsp;</td><td>12:00-13:00/20L</td><td>12:00-13:00/20L</td><td>12:00-13:00/20L</td><td>12:00-13:00/20L</td>
+      </tr>
+      <tr>
+        <td>C41B</td><td>PROGRAMACION ORIENTADA A OBJETOS</td><td>VARGAS DIAZ RAUL</td>
+        <td>13:00-14:00/07A</td><td>&nbsp;</td><td>13:00-14:00/07A</td><td>13:00-14:00/07A</td><td>13:00-14:00/07A</td>
+      </tr>
+    </table>
+  </form>
+</body>
+</html>

@@ -40,7 +40,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# fixtures de scraping (mocks locales para desarrollar contra el portal
-# ITL antes de que exista el backend real, issue #25 sección 11)
-/fixtures/
