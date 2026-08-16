@@ -1,6 +1,6 @@
 "use client";
 
-import { LogoutConfirmModal } from "@/features/auth/LogoutConfirmModal";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Award, BookOpen, Home, Layers, LogOut, X } from "lucide-react";
 import Link from "next/link";
@@ -104,8 +104,11 @@ export function Sidebar({
         </div>
       </aside>
 
-      <LogoutConfirmModal
+      <ConfirmModal
         open={logoutOpen}
+        title="Cerrar sesión"
+        description="¿Estás seguro de que quieres cerrar sesión?"
+        confirmLabel="Cerrar sesión"
         onCancel={() => setLogoutOpen(false)}
         onConfirm={() => {
           setLogoutOpen(false);

@@ -9,10 +9,12 @@ import {
   Search,
   SearchX,
   SlidersHorizontal,
+  Trash2,
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { QueryError } from "@/components/QueryError";
@@ -89,6 +91,7 @@ export default function HorariosPorCarreraPage() {
   const [semestre, setSemestre] = useState<string>("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -185,6 +188,13 @@ export default function HorariosPorCarreraPage() {
     setSelected(subject);
   }
 
+  function handleClearAll() {
+    simulated.clear();
+    setClearConfirmOpen(false);
+    setPreviewOpen(false);
+    showFeedback("Lista guía vaciada", "success");
+  }
+
   useEffect(() => {
     if (!feedback) return;
     const timeout = setTimeout(() => setFeedback(null), 3000);
@@ -222,15 +232,27 @@ export default function HorariosPorCarreraPage() {
                   {simulated.materias.length === 1 ? "materia" : "materias"}
                 </span>
               </div>
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.94 }}
-                onClick={() => setPreviewOpen(true)}
-                className="ml-auto flex flex-none items-center gap-1.5 rounded-lg bg-brand-primary px-2.5 py-1.5 text-xs font-bold text-white transition-[transform,filter] duration-150 motion-safe:hover:-translate-y-0.5 hover:brightness-[1.1]"
-              >
-                <Eye className="h-3.5 w-3.5" strokeWidth={2} />
-                Vista previa
-              </motion.button>
+              <div className="ml-auto flex flex-none items-center gap-2">
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.94 }}
+                  onClick={() => setClearConfirmOpen(true)}
+                  aria-label="Vaciar tu lista guía"
+                  className="flex flex-none items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold text-brand-gray transition-colors duration-150 hover:bg-danger-tint hover:text-danger"
+                >
+                  <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
+                  Vaciar
+                </motion.button>
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.94 }}
+                  onClick={() => setPreviewOpen(true)}
+                  className="flex flex-none items-center gap-1.5 rounded-lg bg-brand-primary px-2.5 py-1.5 text-xs font-bold text-white transition-[transform,filter] duration-150 motion-safe:hover:-translate-y-0.5 hover:brightness-[1.1]"
+                >
+                  <Eye className="h-3.5 w-3.5" strokeWidth={2} />
+                  Vista previa
+                </motion.button>
+              </div>
             </div>
             <div className="flex flex-wrap gap-1.5 p-3">
               <AnimatePresence>
@@ -516,6 +538,16 @@ export default function HorariosPorCarreraPage() {
         materias={simulated.materias}
         onClose={() => setPreviewOpen(false)}
         onRemoveGrupo={simulated.remove}
+      />
+
+      <ConfirmModal
+        open={clearConfirmOpen}
+        title="Vaciar tu lista guía"
+        description={`Vas a quitar las ${simulated.materias.length} materias de tu lista guía. Esta acción no se puede deshacer.`}
+        confirmLabel="Vaciar lista"
+        danger
+        onCancel={() => setClearConfirmOpen(false)}
+        onConfirm={handleClearAll}
       />
 
       <Snackbar message={feedback} variant={feedbackVariant} />
