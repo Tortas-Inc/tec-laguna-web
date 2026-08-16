@@ -3,10 +3,25 @@ import "./globals.css";
 import { InstallCta } from "@/components/InstallCta";
 import { Providers } from "./providers";
 
+const SITE_URL = "https://tec-laguna-app.com";
+const SITE_DESCRIPTION =
+  "Aplicación no oficial para alumnos del Instituto Tecnológico de La Laguna: consulta tu horario, calificaciones y kardex, y simula tu horario del próximo semestre.";
+
 export const metadata: Metadata = {
-  title: "TEC Laguna",
-  description:
-    "Aplicación no oficial para alumnos del Instituto Tecnológico de La Laguna.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "TEC Laguna",
+    template: "%s · TEC Laguna",
+  },
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    title: "TEC Laguna",
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    siteName: "TEC Laguna",
+    locale: "es_MX",
+    type: "website",
+  },
   appleWebApp: {
     capable: true,
     title: "TEC Laguna",
