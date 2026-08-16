@@ -164,7 +164,7 @@ export default function SimuladorHorarioPage() {
     [horarios.data],
   );
 
-  const { isAdded } = saved;
+  const { isAdded, materias: savedMaterias } = saved;
   const statusFiltered = useMemo(() => {
     return pendientes.filter((m) => {
       if (statusFilter === "added") return isAdded(m);
@@ -187,6 +187,35 @@ export default function SimuladorHorarioPage() {
   const filteredMaterias = useMemo(() => {
     return horaFiltered.filter((m) => matchesQuery(m, query));
   }, [horaFiltered, query]);
+
+  // Estados de cada fila, compartidos entre la tabla (desktop) y las
+  // cards (mobile) para no duplicar esta lógica en los dos layouts.
+  const catalogRows = useMemo(() => {
+    return filteredMaterias.map((subject) => {
+      // "Seleccionada" = exactamente este grupo (clave+sección) ya está
+      // en el horario activo — se marca en verde.
+      // "Bloqueada" = la MISMA materia ya está cubierta por OTRO
+      // profesor/sección — no tiene caso agregar dos secciones de la
+      // misma materia, así que se deshabilita.
+      const isSelected = savedMaterias.some((m) => m.grupo === subject.grupo);
+      const isBlocked = !isSelected && isAdded(subject);
+      // Choca en horario con algo que YA está en el horario activo
+      // (misma hora de inicio) — se puede resolver con "Reemplazar" en
+      // vez de bloquearla del todo.
+      const timeConflict =
+        !isSelected && !isBlocked
+          ? savedMaterias.find((m) => startHour(m) === startHour(subject))
+          : undefined;
+      const days = [
+        { label: "L", value: subject.lunes },
+        { label: "M", value: subject.martes },
+        { label: "I", value: subject.miercoles },
+        { label: "J", value: subject.jueves },
+        { label: "V", value: subject.viernes },
+      ];
+      return { subject, isSelected, isBlocked, timeConflict, days };
+    });
+  }, [filteredMaterias, savedMaterias, isAdded]);
 
   const activeStatusLabel = STATUS_FILTERS.find(
     (f) => f.value === statusFilter,
@@ -259,6 +288,7 @@ export default function SimuladorHorarioPage() {
             ? `${kardex.data.carrera} · próximo semestre`
             : "Arma y compara tus opciones para el próximo semestre"
         }
+        stickyOnMobile={false}
       >
         {!checkingSession && !needsCarreraPicker ? (
           <>
@@ -522,156 +552,252 @@ export default function SimuladorHorarioPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="overflow-x-auto rounded-xl border border-brand-gray-lighter"
           >
-            <table className="w-full min-w-[760px] border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-brand-gray-lighter bg-brand-gray-lighter text-left text-[11px] font-bold uppercase tracking-[0.04em] text-brand-gray">
-                  <th className="px-3.5 py-2.5">Grupo</th>
-                  <th className="px-3.5 py-2.5">Materia</th>
-                  <th className="px-3.5 py-2.5">Profesor</th>
-                  <th className="px-3.5 py-2.5">Días</th>
-                  <th className="px-3.5 py-2.5">Horario</th>
-                  <th className="px-3.5 py-2.5" />
-                </tr>
-              </thead>
-              <tbody>
-                {filteredMaterias.map((subject, index) => {
-                  // "Seleccionada" = exactamente este grupo (clave+sección)
-                  // ya está en el horario activo — se marca en verde.
-                  // "Bloqueada" = la MISMA materia ya está cubierta por
-                  // OTRO profesor/sección — no tiene caso agregar dos
-                  // secciones de la misma materia, así que se deshabilita.
-                  const isSelected = saved.materias.some(
-                    (m) => m.grupo === subject.grupo,
-                  );
-                  const isBlocked = !isSelected && saved.isAdded(subject);
-                  // Choca en horario con algo que YA está en el horario
-                  // activo (misma hora de inicio) — se puede resolver con
-                  // "Reemplazar" en vez de bloquearla del todo.
-                  const timeConflict =
-                    !isSelected && !isBlocked
-                      ? saved.materias.find(
-                          (m) => startHour(m) === startHour(subject),
-                        )
-                      : undefined;
-                  const days = [
-                    { label: "L", value: subject.lunes },
-                    { label: "M", value: subject.martes },
-                    { label: "I", value: subject.miercoles },
-                    { label: "J", value: subject.jueves },
-                    { label: "V", value: subject.viernes },
-                  ];
-                  return (
-                    <tr
-                      key={`${subject.grupo}-${index}`}
-                      onClick={isBlocked ? undefined : () => handleToggle(subject)}
-                      aria-disabled={isBlocked}
-                      className={`group border-b border-brand-gray-lighter transition-colors duration-150 last:border-b-0 ${
-                        isSelected
-                          ? "cursor-pointer bg-brand-green-tint"
-                          : isBlocked
-                            ? "cursor-not-allowed opacity-50"
-                            : timeConflict
-                              ? "cursor-pointer bg-danger-tint"
-                              : "cursor-pointer hover:bg-brand-primary-tint"
-                      }`}
-                    >
-                      <td className="whitespace-nowrap px-3.5 py-2.5">
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.75 text-[11px] font-bold text-white ${
-                            isSelected ? "bg-brand-green" : "bg-brand-primary-dark"
+            {/* Mobile: cards — una tabla con scroll horizontal es incómoda
+                en pantallas chicas, y el botón "+" hover-only tampoco
+                funciona con touch, así que aquí siempre queda visible. */}
+            <div className="flex flex-col gap-2.5 sm:hidden">
+              {catalogRows.map(
+                ({ subject, isSelected, isBlocked, timeConflict, days }, index) => (
+                  <div
+                    key={`${subject.grupo}-${index}`}
+                    onClick={isBlocked ? undefined : () => handleToggle(subject)}
+                    aria-disabled={isBlocked}
+                    className={`rounded-xl border p-3.5 transition-colors duration-150 ${
+                      isSelected
+                        ? "cursor-pointer border-brand-green/30 bg-brand-green-tint"
+                        : isBlocked
+                          ? "cursor-not-allowed border-brand-gray-lighter opacity-50"
+                          : timeConflict
+                            ? "cursor-pointer border-danger/30 bg-danger-tint"
+                            : "cursor-pointer border-brand-gray-lighter active:bg-brand-primary-tint"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.75 text-[11px] font-bold text-white ${
+                          isSelected ? "bg-brand-green" : "bg-brand-primary-dark"
+                        }`}
+                      >
+                        {isSelected ? (
+                          <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                        ) : null}
+                        {subject.grupo}
+                      </span>
+
+                      {isBlocked || timeConflict ? null : (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleToggle(subject);
+                          }}
+                          aria-label={
+                            isSelected
+                              ? `Quitar ${subject.materia}`
+                              : `Agregar ${subject.materia}`
+                          }
+                          className={`inline-flex h-7 w-7 flex-none items-center justify-center rounded-full text-white ${
+                            isSelected ? "bg-danger" : "bg-brand-green"
                           }`}
                         >
                           {isSelected ? (
-                            <Check className="h-2.5 w-2.5" strokeWidth={3} />
-                          ) : null}
-                          {subject.grupo}
-                        </span>
-                      </td>
-                      <td
-                        className={`px-3.5 py-2.5 font-bold ${
-                          isSelected ? "text-brand-green" : "text-brand-black"
+                            <X className="h-3.5 w-3.5" strokeWidth={2.4} />
+                          ) : (
+                            <Plus className="h-3.5 w-3.5" strokeWidth={2.4} />
+                          )}
+                        </button>
+                      )}
+                    </div>
+
+                    <div
+                      className={`mt-2 text-sm font-bold ${
+                        isSelected ? "text-brand-green" : "text-brand-black"
+                      }`}
+                    >
+                      {subject.materia}
+                    </div>
+                    <div className="mt-0.5 text-xs text-brand-gray">
+                      {subject.profesor}
+                    </div>
+
+                    {isBlocked ? (
+                      <div className="mt-1.5 text-[11px] font-semibold text-brand-gray-light">
+                        Ya la tienes con otro profesor
+                      </div>
+                    ) : null}
+                    {timeConflict ? (
+                      <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-danger">
+                        Choca con &quot;{timeConflict.materia}&quot;
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleQuickReplace(subject, timeConflict);
+                          }}
+                          className="rounded-full bg-danger px-2 py-0.5 text-[10px] font-bold text-white"
+                        >
+                          Reemplazar
+                        </button>
+                      </div>
+                    ) : null}
+
+                    <div className="mt-2.5 flex items-center justify-between">
+                      <div className="flex gap-1">
+                        {days.map((d) => (
+                          <span
+                            key={d.label}
+                            className={`flex h-5 w-5 flex-none items-center justify-center rounded text-[10px] font-bold ${
+                              d.value
+                                ? isSelected
+                                  ? "bg-brand-green text-white"
+                                  : "bg-brand-primary-dark text-white"
+                                : "bg-brand-gray-lighter text-brand-gray-light"
+                            }`}
+                          >
+                            {d.label}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="text-xs text-brand-gray">
+                        {scheduleLabel(subject)}
+                      </div>
+                    </div>
+                  </div>
+                ),
+              )}
+            </div>
+
+            {/* Tablet/desktop: tabla */}
+            <div className="hidden overflow-x-auto rounded-xl border border-brand-gray-lighter sm:block">
+              <table className="w-full min-w-[760px] border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-brand-gray-lighter bg-brand-gray-lighter text-left text-[11px] font-bold uppercase tracking-[0.04em] text-brand-gray">
+                    <th className="px-3.5 py-2.5">Grupo</th>
+                    <th className="px-3.5 py-2.5">Materia</th>
+                    <th className="px-3.5 py-2.5">Profesor</th>
+                    <th className="px-3.5 py-2.5">Días</th>
+                    <th className="px-3.5 py-2.5">Horario</th>
+                    <th className="px-3.5 py-2.5" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {catalogRows.map(
+                    ({ subject, isSelected, isBlocked, timeConflict, days }, index) => (
+                      <tr
+                        key={`${subject.grupo}-${index}`}
+                        onClick={
+                          isBlocked ? undefined : () => handleToggle(subject)
+                        }
+                        aria-disabled={isBlocked}
+                        className={`group border-b border-brand-gray-lighter transition-colors duration-150 last:border-b-0 ${
+                          isSelected
+                            ? "cursor-pointer bg-brand-green-tint"
+                            : isBlocked
+                              ? "cursor-not-allowed opacity-50"
+                              : timeConflict
+                                ? "cursor-pointer bg-danger-tint"
+                                : "cursor-pointer hover:bg-brand-primary-tint"
                         }`}
                       >
-                        {subject.materia}
-                        {isBlocked ? (
-                          <span className="ml-2 text-[11px] font-semibold text-brand-gray-light">
-                            Ya la tienes con otro profesor
+                        <td className="whitespace-nowrap px-3.5 py-2.5">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.75 text-[11px] font-bold text-white ${
+                              isSelected
+                                ? "bg-brand-green"
+                                : "bg-brand-primary-dark"
+                            }`}
+                          >
+                            {isSelected ? (
+                              <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                            ) : null}
+                            {subject.grupo}
                           </span>
-                        ) : null}
-                        {timeConflict ? (
-                          <span className="ml-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-danger">
-                            Choca con &quot;{timeConflict.materia}&quot;
+                        </td>
+                        <td
+                          className={`px-3.5 py-2.5 font-bold ${
+                            isSelected ? "text-brand-green" : "text-brand-black"
+                          }`}
+                        >
+                          {subject.materia}
+                          {isBlocked ? (
+                            <span className="ml-2 text-[11px] font-semibold text-brand-gray-light">
+                              Ya la tienes con otro profesor
+                            </span>
+                          ) : null}
+                          {timeConflict ? (
+                            <span className="ml-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-danger">
+                              Choca con &quot;{timeConflict.materia}&quot;
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleQuickReplace(subject, timeConflict);
+                                }}
+                                className="rounded-full bg-danger px-2 py-0.5 text-[10px] font-bold text-white transition-[transform,filter] duration-150 motion-safe:hover:-translate-y-0.5 hover:brightness-[1.1]"
+                              >
+                                Reemplazar
+                              </button>
+                            </span>
+                          ) : null}
+                        </td>
+                        <td className="px-3.5 py-2.5 text-brand-gray">
+                          {subject.profesor}
+                        </td>
+                        <td className="px-3.5 py-2.5">
+                          <div className="flex gap-1">
+                            {days.map((d) => (
+                              <span
+                                key={d.label}
+                                className={`flex h-5 w-5 flex-none items-center justify-center rounded text-[10px] font-bold ${
+                                  d.value
+                                    ? isSelected
+                                      ? "bg-brand-green text-white"
+                                      : "bg-brand-primary-dark text-white"
+                                    : "bg-brand-gray-lighter text-brand-gray-light"
+                                }`}
+                              >
+                                {d.label}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="whitespace-nowrap px-3.5 py-2.5 text-brand-gray">
+                          {scheduleLabel(subject)}
+                        </td>
+                        <td className="whitespace-nowrap px-3.5 py-2.5 text-right">
+                          {isBlocked || timeConflict ? null : (
                             <button
                               type="button"
                               onClick={(event) => {
                                 event.stopPropagation();
-                                handleQuickReplace(subject, timeConflict);
+                                handleToggle(subject);
                               }}
-                              className="rounded-full bg-danger px-2 py-0.5 text-[10px] font-bold text-white transition-[transform,filter] duration-150 motion-safe:hover:-translate-y-0.5 hover:brightness-[1.1]"
-                            >
-                              Reemplazar
-                            </button>
-                          </span>
-                        ) : null}
-                      </td>
-                      <td className="px-3.5 py-2.5 text-brand-gray">
-                        {subject.profesor}
-                      </td>
-                      <td className="px-3.5 py-2.5">
-                        <div className="flex gap-1">
-                          {days.map((d) => (
-                            <span
-                              key={d.label}
-                              className={`flex h-5 w-5 flex-none items-center justify-center rounded text-[10px] font-bold ${
-                                d.value
-                                  ? isSelected
-                                    ? "bg-brand-green text-white"
-                                    : "bg-brand-primary-dark text-white"
-                                  : "bg-brand-gray-lighter text-brand-gray-light"
+                              aria-label={
+                                isSelected
+                                  ? `Quitar ${subject.materia}`
+                                  : `Agregar ${subject.materia}`
+                              }
+                              className={`inline-flex h-7 w-7 items-center justify-center rounded-full opacity-0 transition-opacity duration-150 hover:brightness-110 group-hover:opacity-100 ${
+                                isSelected
+                                  ? "bg-danger text-white"
+                                  : "bg-brand-green text-white"
                               }`}
                             >
-                              {d.label}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="whitespace-nowrap px-3.5 py-2.5 text-brand-gray">
-                        {scheduleLabel(subject)}
-                      </td>
-                      <td className="whitespace-nowrap px-3.5 py-2.5 text-right">
-                        {isBlocked || timeConflict ? null : (
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              handleToggle(subject);
-                            }}
-                            aria-label={
-                              isSelected
-                                ? `Quitar ${subject.materia}`
-                                : `Agregar ${subject.materia}`
-                            }
-                            className={`inline-flex h-7 w-7 items-center justify-center rounded-full opacity-0 transition-opacity duration-150 hover:brightness-110 group-hover:opacity-100 ${
-                              isSelected
-                                ? "bg-danger text-white"
-                                : "bg-brand-green text-white"
-                            }`}
-                          >
-                            {isSelected ? (
-                              <X className="h-3.5 w-3.5" strokeWidth={2.4} />
-                            ) : (
-                              <Plus className="h-3.5 w-3.5" strokeWidth={2.4} />
-                            )}
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                              {isSelected ? (
+                                <X className="h-3.5 w-3.5" strokeWidth={2.4} />
+                              ) : (
+                                <Plus className="h-3.5 w-3.5" strokeWidth={2.4} />
+                              )}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ),
+                  )}
+                </tbody>
+              </table>
+            </div>
           </motion.div>
         )
       ) : null}
