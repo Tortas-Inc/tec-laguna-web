@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { DAY_MS } from "@/lib/queryConfig";
 
 export type MateriaHorarioCarrera = {
   materia: string;
@@ -38,6 +39,6 @@ export function useHorariosCarrera(especialidad: string | null) {
     queryKey: ["horarios-carrera", especialidad],
     queryFn: () => fetchHorariosCarrera(especialidad as string),
     enabled: Boolean(especialidad),
-    staleTime: 3 * 60 * 60 * 1000,
+    staleTime: DAY_MS,
   });
 }

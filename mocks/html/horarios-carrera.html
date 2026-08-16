@@ -1,158 +1,351 @@
 <!--
-  Fixture sintética — respuesta simulada de POST /servicios/academicos/horario_materias_2020/horarios.asp
-  (ESPECIALIDAD=CLAVE_CARRERA)
-  Estructura según HorariosCarreraRepositoryImpl.kt:
-    - Tabla de datos: PRIMERA tabla del documento (índice 0) — a diferencia de los otros endpoints
-    - Fila 0 = encabezado, se ignora
-    - Columnas por posición: materia, grupo, lunes, martes, miercoles, jueves, viernes, profesor
-  Cada materia se imparte mínimo 4 días a la semana, mismo horario, como
-  ocurre en la mayoría de las materias reales.
+  Mock — respuesta simulada de POST /horarios/login.aspx (ddlPlan=CODIGO_CARRERA)
+  en apps2.itlalaguna.edu.mx/horarios (rediseño 2026, endpoint público sin sesión).
+  Estructura real de la tabla #gvHorarios:
+    - Columnas: Clave, Grupo(sección), Materia, Horario, L, M, I, J, V,
+      Catedrático, % Req., Requisitos, Correq.
+    - Cada columna de día trae ".aula" (el aula, si ese día hay clase) o
+      ".libre" (sin clase ese día) — el Horario es el mismo para todos los
+      días en los que sí hay clase.
 -->
 <!DOCTYPE html>
 <html>
-<head><title>Horarios por Carrera</title></head>
+<head><title>Consulta de horarios</title></head>
 <body>
-  <table id="tblHorarios" cellspacing="0" border="1">
-    <tr>
-      <th>Materia</th><th>Grupo</th>
-      <th>Lunes</th><th>Martes</th><th>Miércoles</th><th>Jueves</th><th>Viernes</th>
-      <th>Profesor</th>
-    </tr>
-    <tr>
-      <td>DESARROLLO EN ANDROID</td><td>C16B</td>
-      <td>15:00-16:00/19K</td><td>15:00-16:00/19K</td><td>15:00-16:00/19K</td><td>15:00-16:00/19K</td><td>&nbsp;</td>
-      <td>GIL VAZQUEZ LUIS FERNANDO</td>
-    </tr>
-    <tr>
-      <td>BASES DE DATOS II</td><td>C11A</td>
-      <td>10:00-11:00/12B</td><td>10:00-11:00/12B</td><td>10:00-11:00/12B</td><td>10:00-11:00/12B</td><td>10:00-11:00/12B</td>
-      <td>MARTINEZ SOTO ELENA</td>
-    </tr>
-    <tr>
-      <td>INGENIERIA DE SOFTWARE</td><td>C09C</td>
-      <td>08:00-09:00/08A</td><td>08:00-09:00/08A</td><td>08:00-09:00/08A</td><td>08:00-09:00/08A</td><td>&nbsp;</td>
-      <td>RAMIREZ CASTRO JORGE</td>
-    </tr>
-    <tr>
-      <td>CALCULO DIFERENCIAL</td><td>C14A</td>
-      <td>09:00-10:00/05C</td><td>09:00-10:00/05C</td><td>09:00-10:00/05C</td><td>09:00-10:00/05C</td><td>09:00-10:00/05C</td>
-      <td>RAMIREZ CASTRO JORGE</td>
-    </tr>
-    <tr>
-      <td>TALLER DE ETICA</td><td>C11</td>
-      <td>11:00-12:00/03A</td><td>11:00-12:00/03A</td><td>11:00-12:00/03A</td><td>11:00-12:00/03A</td><td>&nbsp;</td>
-      <td>MARTINEZ SOTO ELENA</td>
-    </tr>
-    <tr>
-      <td>REDES DE COMPUTADORAS</td><td>C18B</td>
-      <td>&nbsp;</td><td>13:00-14:00/20L</td><td>13:00-14:00/20L</td><td>13:00-14:00/20L</td><td>13:00-14:00/20L</td>
-      <td>GIL VAZQUEZ LUIS FERNANDO</td>
-    </tr>
-    <tr>
-      <td>ESTRUCTURA DE DATOS</td><td>C31A</td>
-      <td>09:00-10:00/14B</td><td>09:00-10:00/14B</td><td>09:00-10:00/14B</td><td>09:00-10:00/14B</td><td>09:00-10:00/14B</td>
-      <td>PEREZ LOPEZ MARIA</td>
-    </tr>
-    <tr>
-      <td>SISTEMAS OPERATIVOS</td><td>C61B</td>
-      <td>11:00-12:00/22A</td><td>11:00-12:00/22A</td><td>11:00-12:00/22A</td><td>11:00-12:00/22A</td><td>&nbsp;</td>
-      <td>GOMEZ TORRES CARLOS</td>
-    </tr>
-    <tr>
-      <td>INTELIGENCIA ARTIFICIAL</td><td>C81A</td>
-      <td>16:00-17:00/09C</td><td>16:00-17:00/09C</td><td>16:00-17:00/09C</td><td>16:00-17:00/09C</td><td>&nbsp;</td>
-      <td>SANCHEZ RUIZ PATRICIA</td>
-    </tr>
-    <tr>
-      <td>PROGRAMACION ORIENTADA A OBJETOS</td><td>C41B</td>
-      <td>12:00-13:00/07A</td><td>12:00-13:00/07A</td><td>12:00-13:00/07A</td><td>12:00-13:00/07A</td><td>12:00-13:00/07A</td>
-      <td>VARGAS DIAZ RAUL</td>
-    </tr>
-    <tr>
-      <td>OPTATIVA I</td><td>C99A</td>
-      <td>&nbsp;</td><td>14:00-15:00/11B</td><td>14:00-15:00/11B</td><td>14:00-15:00/11B</td><td>14:00-15:00/11B</td>
-      <td>HERNANDEZ CRUZ SOFIA</td>
-    </tr>
-    <tr>
-      <td>SEMINARIO DE TITULACION</td><td>C1WA</td>
-      <td>08:00-09:00/06A</td><td>08:00-09:00/06A</td><td>08:00-09:00/06A</td><td>08:00-09:00/06A</td><td>&nbsp;</td>
-      <td>LOPEZ MARTINEZ JUAN</td>
-    </tr>
-    <tr>
-      <td>TALLER DE INVESTIGACION</td><td>C2ZB</td>
-      <td>&nbsp;</td><td>09:00-10:00/10C</td><td>09:00-10:00/10C</td><td>09:00-10:00/10C</td><td>09:00-10:00/10C</td>
-      <td>RAMOS FLORES ANA</td>
-    </tr>
-    <tr>
-      <td>FISICA GENERAL</td><td>C02A</td>
-      <td>07:00-08:00/15A</td><td>07:00-08:00/15A</td><td>07:00-08:00/15A</td><td>07:00-08:00/15A</td><td>&nbsp;</td>
-      <td>TORRES LIMA DANIEL</td>
-    </tr>
-    <tr>
-      <td>QUIMICA APLICADA</td><td>C12B</td>
-      <td>&nbsp;</td><td>08:00-09:00/16B</td><td>08:00-09:00/16B</td><td>08:00-09:00/16B</td><td>08:00-09:00/16B</td>
-      <td>JIMENEZ RUIZ CARMEN</td>
-    </tr>
-    <tr>
-      <td>ALGEBRA LINEAL</td><td>C22A</td>
-      <td>09:00-10:00/17A</td><td>09:00-10:00/17A</td><td>09:00-10:00/17A</td><td>09:00-10:00/17A</td><td>09:00-10:00/17A</td>
-      <td>MENDOZA CRUZ SOFIA</td>
-    </tr>
-    <tr>
-      <td>PROBABILIDAD Y ESTADISTICA</td><td>C03A</td>
-      <td>10:00-11:00/18B</td><td>10:00-11:00/18B</td><td>10:00-11:00/18B</td><td>10:00-11:00/18B</td><td>&nbsp;</td>
-      <td>FLORES GARCIA PEDRO</td>
-    </tr>
-    <tr>
-      <td>METODOS NUMERICOS</td><td>C23B</td>
-      <td>&nbsp;</td><td>11:00-12:00/19A</td><td>11:00-12:00/19A</td><td>11:00-12:00/19A</td><td>11:00-12:00/19A</td>
-      <td>CASTRO VEGA LAURA</td>
-    </tr>
-    <tr>
-      <td>SISTEMAS DIGITALES</td><td>C05A</td>
-      <td>12:00-13:00/20A</td><td>12:00-13:00/20A</td><td>12:00-13:00/20A</td><td>12:00-13:00/20A</td><td>&nbsp;</td>
-      <td>ROJAS MORALES IVAN</td>
-    </tr>
-    <tr>
-      <td>ARQUITECTURA DE COMPUTADORAS</td><td>C25B</td>
-      <td>13:00-14:00/21B</td><td>13:00-14:00/21B</td><td>13:00-14:00/21B</td><td>13:00-14:00/21B</td><td>13:00-14:00/21B</td>
-      <td>SILVA HERRERA ANA</td>
-    </tr>
-    <tr>
-      <td>REDES AVANZADAS</td><td>C07A</td>
-      <td>&nbsp;</td><td>07:00-08:00/22A</td><td>07:00-08:00/22A</td><td>07:00-08:00/22A</td><td>07:00-08:00/22A</td>
-      <td>VARGAS DIAZ RAUL</td>
-    </tr>
-    <tr>
-      <td>SEGURIDAD INFORMATICA</td><td>C27B</td>
-      <td>14:00-15:00/23A</td><td>14:00-15:00/23A</td><td>14:00-15:00/23A</td><td>14:00-15:00/23A</td><td>&nbsp;</td>
-      <td>HERNANDEZ CRUZ SOFIA</td>
-    </tr>
-    <tr>
-      <td>MINERIA DE DATOS</td><td>C81B</td>
-      <td>15:00-16:00/24A</td><td>15:00-16:00/24A</td><td>15:00-16:00/24A</td><td>15:00-16:00/24A</td><td>&nbsp;</td>
-      <td>GOMEZ TORRES CARLOS</td>
-    </tr>
-    <tr>
-      <td>INGENIERIA WEB</td><td>C91B</td>
-      <td>&nbsp;</td><td>16:00-17:00/25A</td><td>16:00-17:00/25A</td><td>16:00-17:00/25A</td><td>16:00-17:00/25A</td>
-      <td>PEREZ LOPEZ MARIA</td>
-    </tr>
-    <tr>
-      <td>BASES DE DATOS DISTRIBUIDAS</td><td>C41C</td>
-      <td>07:00-08:00/26A</td><td>07:00-08:00/26A</td><td>07:00-08:00/26A</td><td>07:00-08:00/26A</td><td>07:00-08:00/26A</td>
-      <td>RAMIREZ CASTRO JORGE</td>
-    </tr>
-    <tr>
-      <td>REALIDAD VIRTUAL</td><td>C1XB</td>
-      <td>09:00-10:00/27A</td><td>09:00-10:00/27A</td><td>09:00-10:00/27A</td><td>09:00-10:00/27A</td><td>&nbsp;</td>
-      <td>TORRES LIMA DANIEL</td>
-    </tr>
-    <tr>
-      <td>COMPUTACION EN LA NUBE</td><td>C2YA</td>
-      <td>&nbsp;</td><td>10:00-11:00/28B</td><td>10:00-11:00/28B</td><td>10:00-11:00/28B</td><td>10:00-11:00/28B</td>
-      <td>MENDOZA CRUZ SOFIA</td>
-    </tr>
+  <table class="h-tabla" id="gvHorarios">
+    <thead>
+      <tr>
+        <th>Clave</th><th>Grupo</th><th>Materia</th><th>Horario</th>
+        <th>L</th><th>M</th><th>I</th><th>J</th><th>V</th>
+        <th>Catedrático</th><th>% Req.</th><th>Requisitos</th><th>Correq.</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>C16</td><td>B</td><td>DESARROLLO EN ANDROID</td><td><span class="hh">15:00-16:00</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="aula">19K</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td>GIL VAZQUEZ LUIS FERNANDO</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C11</td><td>A</td><td>BASES DE DATOS II</td><td><span class="hh">10:00-11:00</span></td>
+        <td><span class="aula">12B</span></td>
+        <td><span class="aula">12B</span></td>
+        <td><span class="aula">12B</span></td>
+        <td><span class="aula">12B</span></td>
+        <td><span class="aula">12B</span></td>
+        <td>MARTINEZ SOTO ELENA</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C09</td><td>C</td><td>INGENIERIA DE SOFTWARE</td><td><span class="hh">08:00-09:00</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="aula">08A</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td>RAMIREZ CASTRO JORGE</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C14</td><td>A</td><td>CALCULO DIFERENCIAL</td><td><span class="hh">09:00-10:00</span></td>
+        <td><span class="aula">05C</span></td>
+        <td><span class="aula">05C</span></td>
+        <td><span class="aula">05C</span></td>
+        <td><span class="aula">05C</span></td>
+        <td><span class="aula">05C</span></td>
+        <td>RAMIREZ CASTRO JORGE</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>E11</td><td>A</td><td>TALLER DE ETICA</td><td><span class="hh">11:00-12:00</span></td>
+        <td><span class="aula">03A</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td>MARTINEZ SOTO ELENA</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C18</td><td>B</td><td>REDES DE COMPUTADORAS</td><td><span class="hh">13:00-14:00</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="aula">20L</span></td>
+        <td><span class="aula">20L</span></td>
+        <td><span class="aula">20L</span></td>
+        <td><span class="aula">20L</span></td>
+        <td>GIL VAZQUEZ LUIS FERNANDO</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C31</td><td>A</td><td>ESTRUCTURA DE DATOS</td><td><span class="hh">09:00-10:00</span></td>
+        <td><span class="aula">14B</span></td>
+        <td><span class="aula">14B</span></td>
+        <td><span class="aula">14B</span></td>
+        <td><span class="aula">14B</span></td>
+        <td><span class="aula">14B</span></td>
+        <td>PEREZ LOPEZ MARIA</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C61</td><td>B</td><td>SISTEMAS OPERATIVOS</td><td><span class="hh">11:00-12:00</span></td>
+        <td><span class="aula">22A</span></td>
+        <td><span class="aula">22A</span></td>
+        <td><span class="aula">22A</span></td>
+        <td><span class="aula">22A</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td>GOMEZ TORRES CARLOS</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C81</td><td>A</td><td>INTELIGENCIA ARTIFICIAL</td><td><span class="hh">16:00-17:00</span></td>
+        <td><span class="aula">09C</span></td>
+        <td><span class="aula">09C</span></td>
+        <td><span class="aula">09C</span></td>
+        <td><span class="aula">09C</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td>SANCHEZ RUIZ PATRICIA</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C41</td><td>B</td><td>PROGRAMACION ORIENTADA A OBJETOS</td><td><span class="hh">12:00-13:00</span></td>
+        <td><span class="aula">07A</span></td>
+        <td><span class="aula">07A</span></td>
+        <td><span class="aula">07A</span></td>
+        <td><span class="aula">07A</span></td>
+        <td><span class="aula">07A</span></td>
+        <td>VARGAS DIAZ RAUL</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C99</td><td>A</td><td>OPTATIVA I</td><td><span class="hh">14:00-15:00</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="aula">11B</span></td>
+        <td><span class="aula">11B</span></td>
+        <td><span class="aula">11B</span></td>
+        <td><span class="aula">11B</span></td>
+        <td>HERNANDEZ CRUZ SOFIA</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C1W</td><td>A</td><td>SEMINARIO DE TITULACION</td><td><span class="hh">08:00-09:00</span></td>
+        <td><span class="aula">06A</span></td>
+        <td><span class="aula">06A</span></td>
+        <td><span class="aula">06A</span></td>
+        <td><span class="aula">06A</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td>LOPEZ MARTINEZ JUAN</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C2Z</td><td>B</td><td>TALLER DE INVESTIGACION</td><td><span class="hh">09:00-10:00</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="aula">10C</span></td>
+        <td><span class="aula">10C</span></td>
+        <td><span class="aula">10C</span></td>
+        <td><span class="aula">10C</span></td>
+        <td>RAMOS FLORES ANA</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C02</td><td>A</td><td>FISICA GENERAL</td><td><span class="hh">07:00-08:00</span></td>
+        <td><span class="aula">15A</span></td>
+        <td><span class="aula">15A</span></td>
+        <td><span class="aula">15A</span></td>
+        <td><span class="aula">15A</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td>TORRES LIMA DANIEL</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C12</td><td>B</td><td>QUIMICA APLICADA</td><td><span class="hh">08:00-09:00</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="aula">16B</span></td>
+        <td><span class="aula">16B</span></td>
+        <td><span class="aula">16B</span></td>
+        <td><span class="aula">16B</span></td>
+        <td>JIMENEZ RUIZ CARMEN</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C22</td><td>A</td><td>ALGEBRA LINEAL</td><td><span class="hh">09:00-10:00</span></td>
+        <td><span class="aula">17A</span></td>
+        <td><span class="aula">17A</span></td>
+        <td><span class="aula">17A</span></td>
+        <td><span class="aula">17A</span></td>
+        <td><span class="aula">17A</span></td>
+        <td>MENDOZA CRUZ SOFIA</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C03</td><td>A</td><td>PROBABILIDAD Y ESTADISTICA</td><td><span class="hh">10:00-11:00</span></td>
+        <td><span class="aula">18B</span></td>
+        <td><span class="aula">18B</span></td>
+        <td><span class="aula">18B</span></td>
+        <td><span class="aula">18B</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td>FLORES GARCIA PEDRO</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C23</td><td>B</td><td>METODOS NUMERICOS</td><td><span class="hh">11:00-12:00</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="aula">19A</span></td>
+        <td><span class="aula">19A</span></td>
+        <td><span class="aula">19A</span></td>
+        <td><span class="aula">19A</span></td>
+        <td>CASTRO VEGA LAURA</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C05</td><td>A</td><td>SISTEMAS DIGITALES</td><td><span class="hh">12:00-13:00</span></td>
+        <td><span class="aula">20A</span></td>
+        <td><span class="aula">20A</span></td>
+        <td><span class="aula">20A</span></td>
+        <td><span class="aula">20A</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td>ROJAS MORALES IVAN</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C25</td><td>B</td><td>ARQUITECTURA DE COMPUTADORAS</td><td><span class="hh">13:00-14:00</span></td>
+        <td><span class="aula">21B</span></td>
+        <td><span class="aula">21B</span></td>
+        <td><span class="aula">21B</span></td>
+        <td><span class="aula">21B</span></td>
+        <td><span class="aula">21B</span></td>
+        <td>SILVA HERRERA ANA</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C07</td><td>A</td><td>REDES AVANZADAS</td><td><span class="hh">07:00-08:00</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="aula">22A</span></td>
+        <td><span class="aula">22A</span></td>
+        <td><span class="aula">22A</span></td>
+        <td><span class="aula">22A</span></td>
+        <td>VARGAS DIAZ RAUL</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C27</td><td>B</td><td>SEGURIDAD INFORMATICA</td><td><span class="hh">14:00-15:00</span></td>
+        <td><span class="aula">23A</span></td>
+        <td><span class="aula">23A</span></td>
+        <td><span class="aula">23A</span></td>
+        <td><span class="aula">23A</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td>HERNANDEZ CRUZ SOFIA</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C81</td><td>B</td><td>MINERIA DE DATOS</td><td><span class="hh">15:00-16:00</span></td>
+        <td><span class="aula">24A</span></td>
+        <td><span class="aula">24A</span></td>
+        <td><span class="aula">24A</span></td>
+        <td><span class="aula">24A</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td>GOMEZ TORRES CARLOS</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C91</td><td>B</td><td>INGENIERIA WEB</td><td><span class="hh">16:00-17:00</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="aula">25A</span></td>
+        <td><span class="aula">25A</span></td>
+        <td><span class="aula">25A</span></td>
+        <td><span class="aula">25A</span></td>
+        <td>PEREZ LOPEZ MARIA</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C41</td><td>C</td><td>BASES DE DATOS DISTRIBUIDAS</td><td><span class="hh">07:00-08:00</span></td>
+        <td><span class="aula">26A</span></td>
+        <td><span class="aula">26A</span></td>
+        <td><span class="aula">26A</span></td>
+        <td><span class="aula">26A</span></td>
+        <td><span class="aula">26A</span></td>
+        <td>RAMIREZ CASTRO JORGE</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C1X</td><td>B</td><td>REALIDAD VIRTUAL</td><td><span class="hh">09:00-10:00</span></td>
+        <td><span class="aula">27A</span></td>
+        <td><span class="aula">27A</span></td>
+        <td><span class="aula">27A</span></td>
+        <td><span class="aula">27A</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td>TORRES LIMA DANIEL</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C2Y</td><td>A</td><td>COMPUTACION EN LA NUBE</td><td><span class="hh">10:00-11:00</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="aula">28B</span></td>
+        <td><span class="aula">28B</span></td>
+        <td><span class="aula">28B</span></td>
+        <td><span class="aula">28B</span></td>
+        <td>MENDOZA CRUZ SOFIA</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+    </tbody>
   </table>
 </body>
 </html>

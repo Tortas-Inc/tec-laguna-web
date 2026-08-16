@@ -31,10 +31,17 @@ async function fetchKardex(): Promise<KardexData> {
   return res.json();
 }
 
-export function useKardex() {
+export function useKardex({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ["kardex"],
     queryFn: fetchKardex,
     staleTime: 3 * 60 * 60 * 1000,
+    // Por defecto TanStack Query reintenta 3 veces con backoff — un 401
+    // (sin sesión, el caso normal para invitados) va a seguir fallando
+    // igual, así que solo alarga innecesariamente isLoading varios
+    // segundos. Este hook también se usa para saber "¿hay sesión?", así
+    // que conviene que falle rápido.
+    retry: false,
+    enabled,
   });
 }

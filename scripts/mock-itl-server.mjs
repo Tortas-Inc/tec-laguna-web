@@ -91,11 +91,29 @@ const server = createServer(async (req, res) => {
       return sendHtml(res, 200, await readMock("kardex.html"));
     }
 
-    if (
-      pathname === "/servicios/academicos/horario_materias_2020/horarios.asp" &&
-      req.method === "POST"
-    ) {
-      return sendHtml(res, 200, await readMock("horarios-carrera.html"));
+    if (pathname === "/horarios/login.aspx" && req.method === "GET") {
+      return sendHtml(res, 200, await readMock("horarios-consulta-vacia.html"));
+    }
+
+    if (pathname === "/horarios/login.aspx" && req.method === "POST") {
+      const body = await readBody(req);
+      const plan = new URLSearchParams(body).get("ddlPlan") || "1";
+      let html = await readMock("horarios-carrera.html");
+
+      // El mock solo tiene un catálogo fijo (el de Sistemas Computacionales,
+      // "1", cruzado con mocks/html/kardex.html para probar isFinished) —
+      // para cualquier otra carrera se marca cada materia con el plan
+      // pedido, así se nota en el navegador que sí varía según la carrera
+      // elegida (antes siempre devolvía lo mismo sin importar el ddlPlan).
+      if (plan !== "1") {
+        html = html.replace(
+          /(<td>)([A-ZÁÉÍÓÚÑ0-9 ]+)(<\/td><td><span class="hh">)/g,
+          (_match, open, materia, close) =>
+            `${open}${materia} · Plan ${plan}${close}`,
+        );
+      }
+
+      return sendHtml(res, 200, html);
     }
 
     res.writeHead(404, { "Content-Type": "text/plain" });

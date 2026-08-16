@@ -2,14 +2,24 @@
 
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Award, BookOpen, Home, Layers, LogOut, X } from "lucide-react";
+import {
+  Award,
+  BookOpen,
+  Home,
+  Layers,
+  LogIn,
+  LogOut,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { GUEST_MODE_KEY, MANUAL_CARRERA_KEY } from "@/lib/guestMode";
 
 const NAV_ITEMS = [
   { href: "/horario", label: "Tu horario", icon: Home },
-  { href: "/horarios", label: "Horarios", icon: Layers },
+  { href: "/horarios", label: "Simulador", icon: Layers },
   { href: "/calificaciones", label: "Calificaciones", icon: Award },
   { href: "/kardex", label: "Kardex", icon: BookOpen },
 ];
@@ -17,13 +27,21 @@ const NAV_ITEMS = [
 export function Sidebar({
   mobileOpen,
   onCloseMobile,
+  isLoggedIn,
 }: {
   mobileOpen: boolean;
   onCloseMobile: () => void;
+  isLoggedIn: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [logoutOpen, setLogoutOpen] = useState(false);
+  // Invitado: solo tiene sentido ver el simulador — el resto de páginas
+  // necesita sesión y solo mostraría el error de "no autenticado".
+  const navItems = isLoggedIn
+    ? NAV_ITEMS
+    : NAV_ITEMS.filter((item) => item.href === "/horarios");
 
   return (
     <>
@@ -53,14 +71,20 @@ export function Sidebar({
               <X className="h-5 w-5" strokeWidth={1.7} />
             </button>
           </div>
-          {/* TODO: reemplazar por el número de control real cuando exista sesión (issue #25, sección 3) */}
-          <div className="mt-1 text-xs font-semibold text-brand-primary-dark">
-            20211234
-          </div>
+          {isLoggedIn ? (
+            // TODO: reemplazar por el número de control real (issue #25, sección 3)
+            <div className="mt-1 text-xs font-semibold text-brand-primary-dark">
+              20211234
+            </div>
+          ) : (
+            <div className="mt-1 text-xs font-semibold text-brand-gray-light">
+              Modo invitado
+            </div>
+          )}
         </div>
 
         <nav className="flex flex-col gap-0.5">
-          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+          {navItems.map(({ href, label, icon: Icon }) => {
             const active = pathname === href;
             return (
               <Link
@@ -87,14 +111,24 @@ export function Sidebar({
             </span>
             <ThemeToggle />
           </div>
-          <button
-            type="button"
-            onClick={() => setLogoutOpen(true)}
-            className="flex items-center gap-2 text-[13.5px] text-brand-gray transition-colors duration-150 hover:text-brand-primary-dark"
-          >
-            <LogOut className="h-4 w-4" strokeWidth={1.7} />
-            Cerrar sesión
-          </button>
+          {isLoggedIn ? (
+            <button
+              type="button"
+              onClick={() => setLogoutOpen(true)}
+              className="flex items-center gap-2 text-[13.5px] text-brand-gray transition-colors duration-150 hover:text-brand-primary-dark"
+            >
+              <LogOut className="h-4 w-4" strokeWidth={1.7} />
+              Cerrar sesión
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              className="flex items-center gap-2 text-[13.5px] text-brand-gray transition-colors duration-150 hover:text-brand-primary-dark"
+            >
+              <LogIn className="h-4 w-4" strokeWidth={1.7} />
+              Iniciar sesión
+            </Link>
+          )}
           <p className="mt-3 text-[11px] leading-relaxed text-brand-gray-light">
             No afiliado con el ITL/TecNM ·{" "}
             <Link href="/privacidad" className="underline">
@@ -110,8 +144,19 @@ export function Sidebar({
         description="¿Estás seguro de que quieres cerrar sesión?"
         confirmLabel="Cerrar sesión"
         onCancel={() => setLogoutOpen(false)}
-        onConfirm={() => {
+        onConfirm={async () => {
           setLogoutOpen(false);
+          // Borra la cookie httpOnly server-side (el navegador no puede
+          // tocarla por JS) y limpia el cache de TanStack Query — si no,
+          // "Continuar como invitado" seguiría mostrando los datos de la
+          // sesión anterior hasta que expire el staleTime.
+          await fetch("/api/logout", { method: "POST" });
+          queryClient.clear();
+          window.localStorage.removeItem(GUEST_MODE_KEY);
+          // Si antes se usó "Continuar como invitado" y se eligió una
+          // carrera a mano, no debe quedar pegada para la próxima vez que
+          // alguien entre como invitado en este navegador.
+          window.localStorage.removeItem(MANUAL_CARRERA_KEY);
           router.push("/login");
         }}
       />

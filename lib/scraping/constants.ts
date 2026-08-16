@@ -17,9 +17,16 @@ export const ITL_STATUS_BASE = useMockServer
   ? `${MOCK_SERVER_BASE}/StatusAlumno`
   : "http://apps2.itlalaguna.edu.mx/StatusAlumno";
 
-export const ITL_HORARIOS_BASE = useMockServer
-  ? `${MOCK_SERVER_BASE}/servicios/academicos/horario_materias_2020`
-  : "http://apps.itlalaguna.edu.mx/servicios/academicos/horario_materias_2020";
+// El portal rehizo esta sección por completo (antes vivía en
+// apps.itlalaguna.edu.mx/servicios/..., una página ASP clásica sin
+// styling); ahora es apps2.itlalaguna.edu.mx/horarios, pública (no pide
+// sesión) y con un formulario WebForms normal (viewstate + postback).
+//
+// A propósito NO usa el mock server aunque MOCK_ITL=true — /horarios
+// (el simulador) siempre pega directo al portal real; el resto de
+// pantallas (login, Tu horario, Calificaciones, Kardex, vía
+// ITL_STATUS_BASE) sigue pudiendo mockearse normal.
+export const ITL_HORARIOS_BASE = "https://apps2.itlalaguna.edu.mx/horarios";
 
 // Cookie httpOnly propia del navegador — reenvía el ASP.NET_SessionId real
 // del ITL en cada request, sin guardarlo server-side (issue #25, sección 1).
