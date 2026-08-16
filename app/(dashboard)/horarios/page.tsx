@@ -1,11 +1,12 @@
 "use client";
 
 import {
-  CalendarDays,
-  CheckCircle2,
+  Check,
   ChevronDown,
-  ClipboardList,
+  Clock,
   Eye,
+  Plus,
+  RefreshCw,
   Search,
   SearchX,
   SlidersHorizontal,
@@ -16,40 +17,40 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { EmptyState } from "@/components/EmptyState";
+import { LoadingState } from "@/components/LoadingState";
 import { PageHeader } from "@/components/PageHeader";
 import { QueryError } from "@/components/QueryError";
 import { Snackbar, SnackbarVariant } from "@/components/Snackbar";
+import { GUEST_MODE_KEY, MANUAL_CARRERA_KEY } from "@/lib/guestMode";
 import { useKardex } from "@/features/kardex/useKardex";
 import {
   MateriaHorarioCarrera,
   useHorariosCarrera,
 } from "@/features/horarios/useHorariosCarrera";
-import {
-  MateriaDetail,
-  MateriaDetailDrawer,
-} from "@/features/horarios/MateriaDetailDrawer";
-import { getSemestre, sortSemesters } from "@/features/horarios/schedule";
+import { CARRERAS } from "@/features/horarios/carreras";
+import { startHour } from "@/features/horarios/schedule";
 import { SchedulePreviewModal } from "@/features/horarios/SchedulePreviewModal";
 import {
   ADD_RESULT_MESSAGE,
   useSimulatedSchedule,
 } from "@/features/horarios/useSimulatedSchedule";
 
-const DAY_LABELS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
-const CLASS_FILTERS = [
+const STATUS_FILTERS = [
   { value: "all", label: "Todas" },
-  { value: "cursadas", label: "Cursadas" },
-  { value: "pendientes", label: "Pendientes" },
+  { value: "added", label: "En tu horario" },
+  { value: "available", label: "Disponibles" },
 ] as const;
-type ClassFilterValue = (typeof CLASS_FILTERS)[number]["value"];
+type StatusFilterValue = (typeof STATUS_FILTERS)[number]["value"];
 
-function toMateriaDetail(m: MateriaHorarioCarrera): MateriaDetail {
-  const values = [m.lunes, m.martes, m.miercoles, m.jueves, m.viernes];
-  return {
-    badge: m.grupo,
-    name: m.materia,
-    weekly: DAY_LABELS.map((day, i) => ({ day, value: values[i] || "—" })),
-  };
+// Las clases siempre empiezan en punto, así que alcanza con elegir hora
+// entera — cubre el rango real observado en el portal (07:00 a 20:00).
+const HOUR_OPTIONS = Array.from({ length: 14 }, (_, i) =>
+  String(i + 7).padStart(2, "0"),
+);
+
+function startHourNumber(subject: MateriaHorarioCarrera): number | null {
+  const time = startHour(subject);
+  return time ? Number(time.slice(0, 2)) : null;
 }
 
 function scheduleLabel(m: MateriaHorarioCarrera): string {
@@ -71,320 +72,439 @@ function matchesQuery(m: MateriaHorarioCarrera, query: string): boolean {
   );
 }
 
-export default function HorariosPorCarreraPage() {
-  const kardex = useKardex();
-  const especialidad = kardex.data?.carreraCode ?? null;
-  const horarios = useHorariosCarrera(especialidad);
-  const simulated = useSimulatedSchedule();
+export default function SimuladorHorarioPage() {
+  const [manualCarrera, setManualCarrera] = useState("");
+  const [guestMode, setGuestMode] = useState(false);
+  // El cache de queries persiste en localStorage (ver app/providers.tsx) y
+  // se restaura después de montar, así que kardex.isLoading puede diferir
+  // entre el primer render del servidor y el del cliente — se espera a
+  // montar antes de decidir qué mostrar, para no romper la hidratación.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    // La carrera elegida como invitado también se guarda — si no, aunque
+    // el catálogo ya esté cacheado 24h, cada recarga volvería a mostrar
+    // el selector y habría que elegirla de nuevo.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- lectura única de localStorage al montar, no hay forma de derivarlo en el render (evita mismatch de hidratación con el cache persistido)
+    setManualCarrera(
+      window.localStorage.getItem(MANUAL_CARRERA_KEY) ?? "",
+    );
+    setGuestMode(window.localStorage.getItem(GUEST_MODE_KEY) === "true");
+    setMounted(true);
+  }, []);
 
-  const [selected, setSelected] = useState<MateriaHorarioCarrera | null>(
-    null,
-  );
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [conflicting, setConflicting] =
-    useState<MateriaHorarioCarrera | null>(null);
+  useEffect(() => {
+    if (!mounted) return;
+    if (manualCarrera) {
+      window.localStorage.setItem(MANUAL_CARRERA_KEY, manualCarrera);
+    } else {
+      window.localStorage.removeItem(MANUAL_CARRERA_KEY);
+    }
+  }, [manualCarrera, mounted]);
+
+  // Un invitado (botón "Continuar como invitado" en /login) por
+  // definición no tiene sesión — ni vale la pena consultar Kardex.
+  const kardex = useKardex({ enabled: !guestMode });
+
+  // Sin sesión, kardex.data nunca llega — se le pregunta la carrera a mano
+  // (modo invitado, ver botón "Continuar como invitado" en /login).
+  const especialidad = kardex.data?.carreraCode ?? manualCarrera ?? null;
+  // Mientras no sepamos si hay sesión o no, no mostramos ni el simulador
+  // ni el selector — evita un parpadeo del panel completo antes de saber
+  // si hace falta preguntar la carrera.
+  const checkingSession = !mounted || (kardex.isLoading && !manualCarrera);
+  const needsCarreraPicker =
+    !checkingSession && !kardex.data && !manualCarrera;
+  const isGuest = !kardex.data;
+  const horarios = useHorariosCarrera(especialidad);
+  const saved = useSimulatedSchedule();
+  const savedClear = saved.clear;
+  const savedCarreraCode = saved.carreraCode;
+
+  // El horario simulado puede venir de una sesión de invitado anterior en
+  // este navegador — si el usuario ahora inició sesión de verdad y su
+  // carrera real no coincide con la de ese horario, ya no aplica.
+  useEffect(() => {
+    if (!especialidad || !savedCarreraCode) return;
+    if (savedCarreraCode !== especialidad) savedClear();
+  }, [especialidad, savedCarreraCode, savedClear]);
+
   const [feedback, setFeedback] = useState<string | null>(null);
   const [feedbackVariant, setFeedbackVariant] =
     useState<SnackbarVariant>("success");
   const [query, setQuery] = useState("");
-  const [classFilter, setClassFilter] = useState<ClassFilterValue>("all");
-  const [semestre, setSemestre] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("all");
+  const [horaDesde, setHoraDesde] = useState("");
+  const [horaHasta, setHoraHasta] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [horaOpen, setHoraOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+  const [changeCarreraConfirmOpen, setChangeCarreraConfirmOpen] =
+    useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
+  const horaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function onClickOutside(event: MouseEvent) {
       if (!filterRef.current?.contains(event.target as Node)) {
         setFilterOpen(false);
       }
+      if (!horaRef.current?.contains(event.target as Node)) {
+        setHoraOpen(false);
+      }
     }
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
-  // El filtro Cursadas/Pendientes se aplica primero: los chips de semestre
-  // solo muestran los semestres que realmente tienen materias visibles con
-  // el filtro activo.
-  const classFiltered = useMemo(() => {
-    if (!horarios.data) return [];
-    return horarios.data.filter((m) => {
-      if (classFilter === "cursadas") return m.isFinished;
-      if (classFilter === "pendientes") return !m.isFinished;
+  // Ya no se muestran las materias cursadas en el catálogo — para eso está
+  // Kardex, en el menú.
+  const pendientes = useMemo(
+    () => (horarios.data ?? []).filter((m) => !m.isFinished),
+    [horarios.data],
+  );
+
+  const { isAdded } = saved;
+  const statusFiltered = useMemo(() => {
+    return pendientes.filter((m) => {
+      if (statusFilter === "added") return isAdded(m);
+      if (statusFilter === "available") return !isAdded(m);
       return true;
     });
-  }, [horarios.data, classFilter]);
+  }, [pendientes, statusFilter, isAdded]);
 
-  const semesters = useMemo(() => {
-    const unique = new Set(
-      classFiltered.map((m) => getSemestre(m.grupo)).filter(Boolean),
-    );
-    return sortSemesters(Array.from(unique));
-  }, [classFiltered]);
-
-  // Si el semestre seleccionado ya no aplica con el filtro Cursadas/
-  // Pendientes activo (p. ej. no quedan pendientes de ese semestre), se
-  // trata como "Todas" en vez de mostrar una lista vacía silenciosa.
-  const effectiveSemestre = semestre && semesters.includes(semestre)
-    ? semestre
-    : "";
+  const horaFiltered = useMemo(() => {
+    if (!horaDesde && !horaHasta) return statusFiltered;
+    return statusFiltered.filter((m) => {
+      const hour = startHourNumber(m);
+      if (hour === null) return false;
+      if (horaDesde && hour < Number(horaDesde)) return false;
+      if (horaHasta && hour > Number(horaHasta)) return false;
+      return true;
+    });
+  }, [statusFiltered, horaDesde, horaHasta]);
 
   const filteredMaterias = useMemo(() => {
-    const filtered = classFiltered.filter((m) => {
-      if (effectiveSemestre && getSemestre(m.grupo) !== effectiveSemestre) {
-        return false;
-      }
-      return matchesQuery(m, query);
-    });
-    // Las materias pendientes van primero — son las que el alumno puede
-    // agregar a su lista guía; las ya cursadas quedan al final, como
-    // referencia, sin competir por atención.
-    return [...filtered].sort(
-      (a, b) => Number(a.isFinished) - Number(b.isFinished),
-    );
-  }, [classFiltered, effectiveSemestre, query]);
+    return horaFiltered.filter((m) => matchesQuery(m, query));
+  }, [horaFiltered, query]);
+
+  const activeStatusLabel = STATUS_FILTERS.find(
+    (f) => f.value === statusFilter,
+  )!.label;
+  const activeHoraLabel =
+    horaDesde || horaHasta
+      ? `${horaDesde ? `${horaDesde}:00` : "…"}–${horaHasta ? `${horaHasta}:00` : "…"}`
+      : "Horario";
 
   function showFeedback(message: string, variant: SnackbarVariant) {
     setFeedback(message);
     setFeedbackVariant(variant);
   }
 
-  function handleAction() {
-    if (!selected) return;
-    if (simulated.isAdded(selected)) {
-      simulated.remove(selected.grupo);
-      showFeedback("Quitada de tu lista", "success");
-      setSelected(null);
+  // Un solo toggle para agregar/quitar — clic en cualquier parte de la
+  // fila o en el botón "+" que aparece al pasar el mouse, sin abrir nada
+  // aparte (antes esto abría un drawer de detalle).
+  function handleToggle(subject: MateriaHorarioCarrera) {
+    if (saved.isAdded(subject)) {
+      saved.remove(subject.grupo);
+      showFeedback("Quitada de tu horario", "success");
       return;
     }
-    const result = simulated.add(selected);
+    const result = saved.add(subject, especialidad);
     if (result.ok) {
       showFeedback("¡Materia agregada!", "success");
-      setSelected(null);
     } else if (result.reason === "duplicate") {
-      // Duplicado/choque de horario: se muestra dentro del drawer (no en
-      // el snackbar) porque ahí es donde está la atención del usuario.
-      setActionError(ADD_RESULT_MESSAGE.duplicate);
-      setConflicting(null);
+      showFeedback(ADD_RESULT_MESSAGE.duplicate, "error");
+    } else if (result.reason === "different-career") {
+      showFeedback(ADD_RESULT_MESSAGE.differentCarrera, "error");
     } else {
-      setActionError(ADD_RESULT_MESSAGE.conflict(result.conflicting.materia));
-      setConflicting(result.conflicting);
+      showFeedback(
+        ADD_RESULT_MESSAGE.conflict(result.conflicting.materia),
+        "error",
+      );
     }
   }
 
-  function handleReplace() {
-    if (!selected || !conflicting) return;
-    simulated.replace(conflicting, selected);
+  // Botón "Reemplazar" directo en la fila de la tabla.
+  function handleQuickReplace(
+    subject: MateriaHorarioCarrera,
+    conflictingMateria: MateriaHorarioCarrera,
+  ) {
+    saved.replace(conflictingMateria, subject);
     showFeedback("¡Materia reemplazada!", "success");
-    setSelected(null);
-    setActionError(null);
-    setConflicting(null);
-  }
-
-  function handleSelect(subject: MateriaHorarioCarrera) {
-    setActionError(null);
-    setConflicting(null);
-    setSelected(subject);
   }
 
   function handleClearAll() {
-    simulated.clear();
+    saved.clear();
     setClearConfirmOpen(false);
     setPreviewOpen(false);
-    showFeedback("Lista guía vaciada", "success");
+    showFeedback("Horario vaciado", "success");
   }
 
-  useEffect(() => {
-    if (!feedback) return;
-    const timeout = setTimeout(() => setFeedback(null), 3000);
-    return () => clearTimeout(timeout);
-  }, [feedback]);
-
-  const activeFilterLabel = CLASS_FILTERS.find(
-    (f) => f.value === classFilter,
-  )!.label;
+  function handleChangeCarrera() {
+    // El horario armado no tiene sentido para otra carrera (ya quedaría
+    // bloqueado por la validación de carrera de todas formas) — se
+    // reinicia al cambiar.
+    saved.clear();
+    setManualCarrera("");
+    setChangeCarreraConfirmOpen(false);
+  }
 
   return (
     <>
       <PageHeader
-        title="Horarios"
-        subtitle={kardex.data?.carrera ?? "Horarios por carrera"}
-      />
-
-      <AnimatePresence>
-        {simulated.materias.length > 0 ? (
-          <motion.div
-            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-            animate={{ opacity: 1, height: "auto", marginBottom: 20 }}
-            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="overflow-hidden rounded-xl border border-brand-primary/[0.08] bg-brand-gray-lighter shadow-[0_1px_2px_rgba(20,14,6,0.04)]"
-          >
-            <div className="flex flex-wrap items-center gap-3 border-b border-brand-primary/[0.08] p-3">
-              <div className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-brand-primary text-white">
-                <ClipboardList className="h-4 w-4" strokeWidth={2} />
-              </div>
-              <div className="text-sm font-bold text-brand-black">
-                Tu lista guía{" "}
-                <span className="font-normal text-brand-gray">
-                  · {simulated.materias.length}{" "}
-                  {simulated.materias.length === 1 ? "materia" : "materias"}
+        title="Simulador de horario"
+        subtitle={
+          kardex.data?.carrera
+            ? `${kardex.data.carrera} · próximo semestre`
+            : "Arma y compara tus opciones para el próximo semestre"
+        }
+      >
+        {!checkingSession && !needsCarreraPicker ? (
+          <>
+            {isGuest ? (
+              <div className="mb-4 flex flex-col gap-2.5 rounded-xl bg-brand-gray-lighter px-3.5 py-2.5 text-xs text-brand-gray sm:flex-row sm:items-center">
+                <span>
+                  Viendo materias de{" "}
+                  <b className="text-brand-black">
+                    {CARRERAS.find((c) => c.code === manualCarrera)?.label}
+                  </b>
                 </span>
-              </div>
-              <div className="ml-auto flex flex-none items-center gap-2">
                 <motion.button
                   type="button"
                   whileTap={{ scale: 0.94 }}
-                  onClick={() => setClearConfirmOpen(true)}
-                  aria-label="Vaciar tu lista guía"
-                  className="flex flex-none items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold text-brand-gray transition-colors duration-150 hover:bg-danger-tint hover:text-danger"
+                  onClick={() => {
+                    if (saved.materias.length > 0) {
+                      setChangeCarreraConfirmOpen(true);
+                    } else {
+                      setManualCarrera("");
+                    }
+                  }}
+                  className="flex w-full flex-none items-center justify-center gap-1.5 rounded-lg bg-brand-gray px-2.5 py-1.5 text-xs font-bold text-white transition-[transform,filter] duration-150 motion-safe:hover:-translate-y-0.5 hover:brightness-110 sm:ml-auto sm:w-auto"
                 >
-                  <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
-                  Vaciar
-                </motion.button>
-                <motion.button
-                  type="button"
-                  whileTap={{ scale: 0.94 }}
-                  onClick={() => setPreviewOpen(true)}
-                  className="flex flex-none items-center gap-1.5 rounded-lg bg-brand-primary px-2.5 py-1.5 text-xs font-bold text-white transition-[transform,filter] duration-150 motion-safe:hover:-translate-y-0.5 hover:brightness-[1.1]"
-                >
-                  <Eye className="h-3.5 w-3.5" strokeWidth={2} />
-                  Vista previa
+                  <RefreshCw className="h-3.5 w-3.5" strokeWidth={2.2} />
+                  Cambiar carrera
                 </motion.button>
               </div>
-            </div>
-            <div className="flex flex-wrap gap-1.5 p-3">
-              <AnimatePresence>
-                {simulated.materias.map((m) => (
-                  <motion.span
-                    key={m.grupo}
-                    layout
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.15 }}
-                    className="flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-1 text-xs font-semibold text-brand-primary-dark"
-                  >
-                    {m.materia}
-                    <button
-                      type="button"
-                      onClick={() => simulated.remove(m.grupo)}
-                      aria-label={`Quitar ${m.materia}`}
-                      className="text-brand-gray-light hover:text-brand-primary-dark"
-                    >
-                      <X className="h-3 w-3" strokeWidth={2} />
-                    </button>
-                  </motion.span>
-                ))}
-              </AnimatePresence>
-            </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-
-      <div className="mb-4.5 flex flex-col gap-2.5 sm:flex-row">
-        <div className="flex flex-1 items-center gap-2 rounded-[10px] bg-brand-gray-lighter px-3.5 py-2.5 text-sm text-brand-gray-light transition-shadow duration-150 focus-within:ring-2 focus-within:ring-brand-primary/40 sm:max-w-80">
-          <Search className="h-[18px] w-[18px] flex-none" strokeWidth={1.7} />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar materia..."
-            className="w-full bg-transparent text-brand-black outline-none placeholder:text-brand-gray-light"
-          />
-        </div>
-
-        <div ref={filterRef} className="relative">
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.96 }}
-            onClick={() => setFilterOpen((v) => !v)}
-            className="flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-brand-gray-lighter px-3.5 py-2.25 text-sm font-semibold text-brand-black sm:w-auto"
-          >
-            <SlidersHorizontal className="h-[18px] w-[18px]" strokeWidth={1.7} />
-            {activeFilterLabel}
-            <motion.span
-              animate={{ rotate: filterOpen ? 180 : 0 }}
-              transition={{ duration: 0.18 }}
-            >
-              <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} />
-            </motion.span>
-          </motion.button>
-
-          <AnimatePresence>
-            {filterOpen ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.96, y: -4 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.96, y: -4 }}
-                transition={{ duration: 0.15 }}
-                className="absolute right-0 z-10 mt-1.5 w-40 overflow-hidden rounded-[10px] border border-brand-gray-lighter bg-surface shadow-[0_10px_24px_-8px_rgba(20,14,6,0.18)]"
-              >
-                {CLASS_FILTERS.map((f) => (
-                  <button
-                    key={f.value}
-                    type="button"
-                    onClick={() => {
-                      setClassFilter(f.value);
-                      setFilterOpen(false);
-                    }}
-                    className={`block w-full px-3.5 py-2.5 text-left text-sm font-semibold transition-colors duration-150 hover:bg-brand-primary-tint ${
-                      classFilter === f.value
-                        ? "text-brand-primary-dark"
-                        : "text-brand-black"
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </motion.div>
             ) : null}
-          </AnimatePresence>
-        </div>
-      </div>
 
-      {semesters.length > 0 ? (
-        <div className="mb-5 flex flex-wrap gap-2">
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.93 }}
-            onClick={() => setSemestre("")}
-            className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors duration-150 ${
-              effectiveSemestre === ""
-                ? "bg-brand-primary text-white"
-                : "bg-brand-gray-lighter text-brand-gray hover:bg-brand-primary-tint hover:text-brand-primary-dark"
-            }`}
-          >
-            Todas
-          </motion.button>
-          <AnimatePresence>
-            {semesters.map((s) => (
+            <div className="flex flex-col gap-2.5 sm:flex-row">
+              <div className="flex flex-1 items-center gap-2 rounded-[10px] bg-brand-gray-lighter px-3.5 py-2.5 text-sm text-brand-gray-light transition-shadow duration-150 focus-within:ring-2 focus-within:ring-brand-primary/40 sm:max-w-80">
+                <Search className="h-[18px] w-[18px] flex-none" strokeWidth={1.7} />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Buscar materia..."
+                  className="w-full bg-transparent text-brand-black outline-none placeholder:text-brand-gray-light"
+                />
+              </div>
+
+              <div ref={filterRef} className="relative">
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => setFilterOpen((v) => !v)}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-brand-gray-lighter px-3.5 py-2.25 text-sm font-semibold text-brand-black sm:w-auto"
+                >
+                  <SlidersHorizontal className="h-[18px] w-[18px]" strokeWidth={1.7} />
+                  {activeStatusLabel}
+                  <motion.span
+                    animate={{ rotate: filterOpen ? 180 : 0 }}
+                    transition={{ duration: 0.18 }}
+                  >
+                    <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} />
+                  </motion.span>
+                </motion.button>
+
+                <AnimatePresence>
+                  {filterOpen ? (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.96, y: -4 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.96, y: -4 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 z-10 mt-1.5 w-44 overflow-hidden rounded-[10px] border border-brand-gray-lighter bg-surface shadow-[0_10px_24px_-8px_rgba(20,14,6,0.18)]"
+                    >
+                      {STATUS_FILTERS.map((f) => (
+                        <button
+                          key={f.value}
+                          type="button"
+                          onClick={() => {
+                            setStatusFilter(f.value);
+                            setFilterOpen(false);
+                          }}
+                          className={`block w-full px-3.5 py-2.5 text-left text-sm font-semibold transition-colors duration-150 hover:bg-brand-primary-tint ${
+                            statusFilter === f.value
+                              ? "text-brand-primary-dark"
+                              : "text-brand-black"
+                          }`}
+                        >
+                          {f.label}
+                        </button>
+                      ))}
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
+              </div>
+
+              <div ref={horaRef} className="relative">
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => setHoraOpen((v) => !v)}
+                  className={`flex w-full items-center justify-center gap-1.5 rounded-[10px] border px-3.5 py-2.25 text-sm font-semibold sm:w-auto ${
+                    horaDesde || horaHasta
+                      ? "border-brand-primary-dark bg-brand-primary-tint text-brand-primary-dark"
+                      : "border-brand-gray-lighter text-brand-black"
+                  }`}
+                >
+                  <Clock className="h-[18px] w-[18px]" strokeWidth={1.7} />
+                  {activeHoraLabel}
+                  <motion.span
+                    animate={{ rotate: horaOpen ? 180 : 0 }}
+                    transition={{ duration: 0.18 }}
+                  >
+                    <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} />
+                  </motion.span>
+                </motion.button>
+
+                <AnimatePresence>
+                  {horaOpen ? (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.96, y: -4 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.96, y: -4 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 z-10 mt-1.5 w-64 rounded-[10px] border border-brand-gray-lighter bg-surface p-3.5 shadow-[0_10px_24px_-8px_rgba(20,14,6,0.18)]"
+                    >
+                      <div className="flex items-end gap-2">
+                        <div className="flex-1">
+                          <label className="mb-1 block text-[11px] font-bold uppercase tracking-[0.04em] text-brand-gray-light">
+                            Desde
+                          </label>
+                          <select
+                            value={horaDesde}
+                            onChange={(e) => setHoraDesde(e.target.value)}
+                            className="w-full rounded-[8px] border border-brand-gray-lighter bg-background px-2 py-2 text-sm font-semibold text-brand-black outline-none focus:ring-2 focus:ring-brand-primary/40"
+                          >
+                            <option value="">Cualquiera</option>
+                            {HOUR_OPTIONS.map((h) => (
+                              <option key={h} value={h}>
+                                {h}:00
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="flex-1">
+                          <label className="mb-1 block text-[11px] font-bold uppercase tracking-[0.04em] text-brand-gray-light">
+                            Hasta
+                          </label>
+                          <select
+                            value={horaHasta}
+                            onChange={(e) => setHoraHasta(e.target.value)}
+                            className="w-full rounded-[8px] border border-brand-gray-lighter bg-background px-2 py-2 text-sm font-semibold text-brand-black outline-none focus:ring-2 focus:ring-brand-primary/40"
+                          >
+                            <option value="">Cualquiera</option>
+                            {HOUR_OPTIONS.map((h) => (
+                              <option key={h} value={h}>
+                                {h}:00
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      {horaDesde || horaHasta ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setHoraDesde("");
+                            setHoraHasta("");
+                          }}
+                          className="mt-2.5 text-xs font-semibold text-brand-primary-dark hover:underline"
+                        >
+                          Limpiar
+                        </button>
+                      ) : null}
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
+              </div>
+
+              <div className="flex flex-none gap-2.5 sm:ml-auto">
+                <button
+                  type="button"
+                  onClick={() => setClearConfirmOpen(true)}
+                  disabled={!saved.materias.length}
+                  aria-label="Vaciar tu horario"
+                  className="flex flex-none items-center justify-center gap-1.5 rounded-[10px] px-3.5 py-2.25 text-sm font-semibold text-brand-gray transition-colors duration-150 hover:bg-danger-tint hover:text-danger disabled:pointer-events-none disabled:opacity-40"
+                >
+                  <Trash2 className="h-[18px] w-[18px]" strokeWidth={1.7} />
+                  Vaciar
+                </button>
+
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => setPreviewOpen(true)}
+                  disabled={!saved.materias.length}
+                  className="flex flex-none items-center justify-center gap-1.5 rounded-[10px] bg-brand-primary px-3.5 py-2.25 text-sm font-bold text-white transition-[transform,filter] duration-150 motion-safe:hover:-translate-y-0.5 hover:brightness-[1.1] disabled:pointer-events-none disabled:opacity-40"
+                >
+                  <Eye className="h-[18px] w-[18px]" strokeWidth={1.7} />
+                  Vista previa
+                  {saved.materias.length > 0 ? (
+                    <span className="rounded-full bg-white/25 px-1.5 py-0.25 text-xs">
+                      {saved.materias.length}
+                    </span>
+                  ) : null}
+                </motion.button>
+              </div>
+            </div>
+          </>
+        ) : null}
+      </PageHeader>
+
+      {checkingSession ? (
+        <LoadingState />
+      ) : needsCarreraPicker ? (
+        <div className="mx-auto max-w-3xl text-center">
+          <div className="text-lg font-bold text-brand-black">
+            ¿Cuál es tu carrera?
+          </div>
+          <p className="mx-auto mt-1 max-w-sm text-sm text-brand-gray">
+            Como no iniciaste sesión no sabemos tu carrera todavía — elígela
+            para ver el catálogo de materias disponibles.
+          </p>
+          <div className="mt-5 grid grid-cols-1 gap-3 text-left sm:grid-cols-2 lg:grid-cols-3">
+            {CARRERAS.map((c, index) => (
               <motion.button
-                key={s}
+                key={c.code}
                 type="button"
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.85 }}
-                whileTap={{ scale: 0.93 }}
-                transition={{ duration: 0.15 }}
-                onClick={() => setSemestre(s)}
-                className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors duration-150 ${
-                  effectiveSemestre === s
-                    ? "bg-brand-primary text-white"
-                    : "bg-brand-gray-lighter text-brand-gray hover:bg-brand-primary-tint hover:text-brand-primary-dark"
-                }`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.2,
+                  delay: Math.min(index * 0.03, 0.3),
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+                whileHover={{ y: -3 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setManualCarrera(c.code)}
+                className="flex items-center gap-3 rounded-xl bg-brand-gray-lighter p-4 transition-shadow duration-200 ease-out hover:shadow-[0_14px_26px_-12px_rgba(20,14,6,0.14)]"
               >
-                {s === "Especialidad" ? s : `Semestre ${s}`}
+                <div className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-brand-gray text-white">
+                  <c.icon className="h-5 w-5" strokeWidth={1.8} />
+                </div>
+                <span className="text-sm font-bold text-brand-black">
+                  {c.label}
+                </span>
               </motion.button>
             ))}
-          </AnimatePresence>
+          </div>
         </div>
-      ) : null}
+      ) : (
+        <>
 
-      {kardex.isError ? <QueryError message={kardex.error.message} /> : null}
-      {horarios.isLoading || kardex.isLoading ? (
-        <p className="text-sm text-brand-gray">Cargando…</p>
-      ) : null}
+      {horarios.isLoading ? <LoadingState label="Cargando materias…" /> : null}
       {horarios.isError ? (
         <QueryError message={horarios.error.message} />
       ) : null}
@@ -394,161 +514,196 @@ export default function HorariosPorCarreraPage() {
           <EmptyState
             icon={SearchX}
             title="No encontramos materias"
-            description="Prueba con otro semestre o ajusta los filtros de búsqueda."
+            description="Ajusta la búsqueda o los filtros e intenta de nuevo."
           />
         ) : (
           <motion.div
-            key={`${classFilter}-${effectiveSemestre}-${query}`}
+            key={`${statusFilter}-${horaDesde}-${horaHasta}-${query}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3"
+            className="overflow-x-auto rounded-xl border border-brand-gray-lighter"
           >
-            {filteredMaterias.map((subject, index) => {
-              const cardClass = `relative rounded-xl p-4 text-left ${
-                subject.isFinished
-                  ? "cursor-default bg-brand-green-tint"
-                  : "cursor-pointer bg-brand-primary-tint transition-shadow duration-200 ease-out hover:shadow-[0_14px_26px_-12px_rgba(20,14,6,0.22)]"
-              }`;
-              const content = (
-                <>
-                  {subject.isFinished ? (
-                    <CheckCircle2
-                      className="absolute right-3.5 top-3.5 h-[18px] w-[18px] text-brand-green"
-                      strokeWidth={1.7}
-                    />
-                  ) : simulated.isAdded(subject) ? (
-                    <motion.span
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ type: "spring", stiffness: 500, damping: 22 }}
-                      className="absolute right-3.5 top-3.5 rounded-full bg-brand-primary-dark px-2 py-0.5 text-[9px] font-bold text-white"
+            <table className="w-full min-w-[760px] border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-brand-gray-lighter bg-brand-gray-lighter text-left text-[11px] font-bold uppercase tracking-[0.04em] text-brand-gray">
+                  <th className="px-3.5 py-2.5">Grupo</th>
+                  <th className="px-3.5 py-2.5">Materia</th>
+                  <th className="px-3.5 py-2.5">Profesor</th>
+                  <th className="px-3.5 py-2.5">Días</th>
+                  <th className="px-3.5 py-2.5">Horario</th>
+                  <th className="px-3.5 py-2.5" />
+                </tr>
+              </thead>
+              <tbody>
+                {filteredMaterias.map((subject, index) => {
+                  // "Seleccionada" = exactamente este grupo (clave+sección)
+                  // ya está en el horario activo — se marca en verde.
+                  // "Bloqueada" = la MISMA materia ya está cubierta por
+                  // OTRO profesor/sección — no tiene caso agregar dos
+                  // secciones de la misma materia, así que se deshabilita.
+                  const isSelected = saved.materias.some(
+                    (m) => m.grupo === subject.grupo,
+                  );
+                  const isBlocked = !isSelected && saved.isAdded(subject);
+                  // Choca en horario con algo que YA está en el horario
+                  // activo (misma hora de inicio) — se puede resolver con
+                  // "Reemplazar" en vez de bloquearla del todo.
+                  const timeConflict =
+                    !isSelected && !isBlocked
+                      ? saved.materias.find(
+                          (m) => startHour(m) === startHour(subject),
+                        )
+                      : undefined;
+                  const days = [
+                    { label: "L", value: subject.lunes },
+                    { label: "M", value: subject.martes },
+                    { label: "I", value: subject.miercoles },
+                    { label: "J", value: subject.jueves },
+                    { label: "V", value: subject.viernes },
+                  ];
+                  return (
+                    <tr
+                      key={`${subject.grupo}-${index}`}
+                      onClick={isBlocked ? undefined : () => handleToggle(subject)}
+                      aria-disabled={isBlocked}
+                      className={`group border-b border-brand-gray-lighter transition-colors duration-150 last:border-b-0 ${
+                        isSelected
+                          ? "cursor-pointer bg-brand-green-tint"
+                          : isBlocked
+                            ? "cursor-not-allowed opacity-50"
+                            : timeConflict
+                              ? "cursor-pointer bg-danger-tint"
+                              : "cursor-pointer hover:bg-brand-primary-tint"
+                      }`}
                     >
-                      En tu lista
-                    </motion.span>
-                  ) : null}
-                  <span
-                    className={`inline-block rounded-full px-2 py-0.75 text-[11px] font-bold text-white ${
-                      subject.isFinished
-                        ? "bg-brand-green"
-                        : "bg-brand-primary-dark"
-                    }`}
-                  >
-                    {subject.grupo}
-                  </span>
-                  <div
-                    className={`mt-2 text-base font-bold ${
-                      subject.isFinished
-                        ? "text-brand-green"
-                        : "text-brand-primary-dark"
-                    }`}
-                  >
-                    {subject.materia}
-                  </div>
-                  <div
-                    className={`mt-0.75 text-[13px] ${
-                      subject.isFinished
-                        ? "text-brand-green"
-                        : "text-brand-primary-dark"
-                    }`}
-                  >
-                    {subject.profesor}
-                  </div>
-                  <div
-                    className={`mt-2 flex items-center gap-1 ${
-                      subject.isFinished
-                        ? "text-brand-green"
-                        : "text-brand-primary-dark"
-                    }`}
-                  >
-                    <CalendarDays className="h-3 w-3" strokeWidth={1.7} />
-                    <span className="text-xs font-bold">
-                      {scheduleLabel(subject)}
-                    </span>
-                  </div>
-                </>
-              );
-
-              const motionProps = {
-                initial: { opacity: 0, y: 8 },
-                animate: { opacity: subject.isFinished ? 0.65 : 1, y: 0 },
-                transition: {
-                  duration: 0.2,
-                  delay: Math.min(index * 0.025, 0.3),
-                  ease: [0.16, 1, 0.3, 1] as const,
-                },
-              };
-
-              if (subject.isFinished) {
-                return (
-                  <motion.div
-                    key={subject.grupo}
-                    {...motionProps}
-                    className={cardClass}
-                    aria-disabled="true"
-                  >
-                    {content}
-                  </motion.div>
-                );
-              }
-
-              return (
-                <motion.button
-                  key={subject.grupo}
-                  type="button"
-                  whileHover={{ y: -3 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => handleSelect(subject)}
-                  className={cardClass}
-                  {...motionProps}
-                >
-                  {content}
-                </motion.button>
-              );
-            })}
+                      <td className="whitespace-nowrap px-3.5 py-2.5">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.75 text-[11px] font-bold text-white ${
+                            isSelected ? "bg-brand-green" : "bg-brand-primary-dark"
+                          }`}
+                        >
+                          {isSelected ? (
+                            <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                          ) : null}
+                          {subject.grupo}
+                        </span>
+                      </td>
+                      <td
+                        className={`px-3.5 py-2.5 font-bold ${
+                          isSelected ? "text-brand-green" : "text-brand-black"
+                        }`}
+                      >
+                        {subject.materia}
+                        {isBlocked ? (
+                          <span className="ml-2 text-[11px] font-semibold text-brand-gray-light">
+                            Ya la tienes con otro profesor
+                          </span>
+                        ) : null}
+                        {timeConflict ? (
+                          <span className="ml-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-danger">
+                            Choca con &quot;{timeConflict.materia}&quot;
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleQuickReplace(subject, timeConflict);
+                              }}
+                              className="rounded-full bg-danger px-2 py-0.5 text-[10px] font-bold text-white transition-[transform,filter] duration-150 motion-safe:hover:-translate-y-0.5 hover:brightness-[1.1]"
+                            >
+                              Reemplazar
+                            </button>
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="px-3.5 py-2.5 text-brand-gray">
+                        {subject.profesor}
+                      </td>
+                      <td className="px-3.5 py-2.5">
+                        <div className="flex gap-1">
+                          {days.map((d) => (
+                            <span
+                              key={d.label}
+                              className={`flex h-5 w-5 flex-none items-center justify-center rounded text-[10px] font-bold ${
+                                d.value
+                                  ? isSelected
+                                    ? "bg-brand-green text-white"
+                                    : "bg-brand-primary-dark text-white"
+                                  : "bg-brand-gray-lighter text-brand-gray-light"
+                              }`}
+                            >
+                              {d.label}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap px-3.5 py-2.5 text-brand-gray">
+                        {scheduleLabel(subject)}
+                      </td>
+                      <td className="whitespace-nowrap px-3.5 py-2.5 text-right">
+                        {isBlocked || timeConflict ? null : (
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleToggle(subject);
+                            }}
+                            aria-label={
+                              isSelected
+                                ? `Quitar ${subject.materia}`
+                                : `Agregar ${subject.materia}`
+                            }
+                            className={`inline-flex h-7 w-7 items-center justify-center rounded-full opacity-0 transition-opacity duration-150 hover:brightness-110 group-hover:opacity-100 ${
+                              isSelected
+                                ? "bg-danger text-white"
+                                : "bg-brand-green text-white"
+                            }`}
+                          >
+                            {isSelected ? (
+                              <X className="h-3.5 w-3.5" strokeWidth={2.4} />
+                            ) : (
+                              <Plus className="h-3.5 w-3.5" strokeWidth={2.4} />
+                            )}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </motion.div>
         )
       ) : null}
 
-      <MateriaDetailDrawer
-        materia={selected ? toMateriaDetail(selected) : null}
-        onClose={() => {
-          setSelected(null);
-          setActionError(null);
-          setConflicting(null);
-        }}
-        actionLabel={
-          selected
-            ? simulated.isAdded(selected)
-              ? "Quitar de mi lista"
-              : "Agregar a mi lista"
-            : undefined
-        }
-        actionVariant={
-          selected && simulated.isAdded(selected) ? "remove" : "add"
-        }
-        onAction={handleAction}
-        actionError={actionError}
-        onReplace={conflicting ? handleReplace : undefined}
-        disclaimer="Da clic para agregarla a tu lista guía del próximo semestre — no es tu inscripción oficial."
-      />
-
       <SchedulePreviewModal
         open={previewOpen}
-        materias={simulated.materias}
+        materias={saved.materias}
         onClose={() => setPreviewOpen(false)}
-        onRemoveGrupo={simulated.remove}
+        onRemoveGrupo={saved.remove}
       />
 
       <ConfirmModal
         open={clearConfirmOpen}
-        title="Vaciar tu lista guía"
-        description={`Vas a quitar las ${simulated.materias.length} materias de tu lista guía. Esta acción no se puede deshacer.`}
-        confirmLabel="Vaciar lista"
+        title="Vaciar tu horario"
+        description={`Vas a quitar las ${saved.materias.length} materias de tu horario. Esta acción no se puede deshacer.`}
+        confirmLabel="Vaciar horario"
         danger
         onCancel={() => setClearConfirmOpen(false)}
         onConfirm={handleClearAll}
       />
+
+      <ConfirmModal
+        open={changeCarreraConfirmOpen}
+        title="Cambiar de carrera"
+        description={`Al cambiar de carrera se va a borrar el horario que armaste (${saved.materias.length} ${saved.materias.length === 1 ? "materia" : "materias"}). Esta acción no se puede deshacer.`}
+        confirmLabel="Cambiar carrera"
+        danger
+        onCancel={() => setChangeCarreraConfirmOpen(false)}
+        onConfirm={handleChangeCarrera}
+      />
+        </>
+      )}
 
       <Snackbar message={feedback} variant={feedbackVariant} />
     </>

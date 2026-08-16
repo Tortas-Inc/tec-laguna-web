@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import loginAnimation from "@/public/lottie/login.json";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { GUEST_MODE_KEY } from "@/lib/guestMode";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -43,6 +44,10 @@ export default function LoginPage() {
   const mutation = useMutation({
     mutationFn: login,
     onSuccess: () => {
+      // Por si venía de "Continuar como invitado" antes: ya inició
+      // sesión de verdad, así que /horarios debe volver a consultar
+      // Kardex normalmente.
+      window.localStorage.removeItem(GUEST_MODE_KEY);
       setTimeout(() => router.push("/horario"), 280);
     },
   });
@@ -145,6 +150,16 @@ export default function LoginPage() {
               ? "¡Bienvenido!"
               : "Iniciar sesión"}
         </motion.button>
+
+        <motion.div variants={item} className="mt-3 text-center">
+          <Link
+            href="/horarios"
+            onClick={() => window.localStorage.setItem(GUEST_MODE_KEY, "true")}
+            className="text-sm font-semibold text-brand-gray underline-offset-2 transition-colors duration-150 hover:text-brand-primary-dark hover:underline"
+          >
+            Continuar como invitado
+          </Link>
+        </motion.div>
 
         <motion.p
           variants={item}

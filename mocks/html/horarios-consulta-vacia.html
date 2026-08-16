@@ -1,0 +1,27 @@
+<!--
+  Mock — respuesta simulada de GET /horarios/login.aspx en
+  apps2.itlalaguna.edu.mx/horarios (rediseño 2026): la página con el
+  selector de "Plan de estudios" antes de consultar, sin resultados
+  todavía. El mock server no valida estos valores de viewstate (los
+  relaya tal cual en el POST), pero deben existir para que
+  fetchHorariosCarreraHtml() los pueda leer igual que contra el portal
+  real.
+-->
+<!DOCTYPE html>
+<html>
+<head><title>Consulta de horarios</title></head>
+<body>
+  <form method="post" action="./login.aspx" id="form1">
+    <div class="aspNetHidden">
+      <input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="mock-viewstate" />
+      <input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="mock-generator" />
+      <input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="mock-eventvalidation" />
+    </div>
+    <select name="ddlPlan" id="ddlPlan">
+      <option value="">Selecciona un plan</option>
+      <option value="1">INGENIERIA EN SISTEMAS COMPUTACIONALES (1)</option>
+    </select>
+    <input type="submit" name="btnConsultar" value="Consultar" id="btnConsultar" />
+  </form>
+</body>
+</html>

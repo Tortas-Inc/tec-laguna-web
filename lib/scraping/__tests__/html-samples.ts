@@ -98,47 +98,98 @@ export const KARDEX_HTML = `
 </html>
 `;
 
+// Estructura del rediseño 2026 de "Consulta de horarios"
+// (apps2.itlalaguna.edu.mx/horarios/login.aspx, tabla #gvHorarios):
+// clave y grupo(sección) van en columnas separadas, un solo "Horario"
+// para todos los días, y cada columna de día solo dice el aula (o
+// ".libre" si ese día no hay clase).
 export const HORARIOS_CARRERA_HTML = `
 <!DOCTYPE html>
 <html>
-<head><title>Horarios por Carrera</title></head>
+<head><title>Consulta de horarios</title></head>
 <body>
-  <table id="tblHorarios" cellspacing="0" border="1">
-    <tr>
-      <th>Materia</th><th>Grupo</th>
-      <th>Lunes</th><th>Martes</th><th>Miércoles</th><th>Jueves</th><th>Viernes</th>
-      <th>Profesor</th>
-    </tr>
-    <tr>
-      <td>DESARROLLO EN ANDROID</td><td>C16B</td>
-      <td>&nbsp;</td><td>15:00-16:00/19K</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
-      <td>GIL VAZQUEZ LUIS FERNANDO</td>
-    </tr>
-    <tr>
-      <td>BASES DE DATOS II</td><td>C11A</td>
-      <td>&nbsp;</td><td>&nbsp;</td><td>10:00-11:00/12B</td><td>&nbsp;</td><td>&nbsp;</td>
-      <td>MARTINEZ SOTO ELENA</td>
-    </tr>
-    <tr>
-      <td>INGENIERIA DE SOFTWARE</td><td>C09C</td>
-      <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>08:00-09:00/08A</td><td>&nbsp;</td>
-      <td>RAMIREZ CASTRO JORGE</td>
-    </tr>
-    <tr>
-      <td>CALCULO DIFERENCIAL</td><td>C14A</td>
-      <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>09:00-10:00/05C</td>
-      <td>RAMIREZ CASTRO JORGE</td>
-    </tr>
-    <tr>
-      <td>TALLER DE ETICA</td><td>C11</td>
-      <td>11:00-12:00/03A</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
-      <td>MARTINEZ SOTO ELENA</td>
-    </tr>
-    <tr>
-      <td>REDES DE COMPUTADORAS</td><td>C18B</td>
-      <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>13:00-14:00/20L</td>
-      <td>GIL VAZQUEZ LUIS FERNANDO</td>
-    </tr>
+  <table class="h-tabla" id="gvHorarios">
+    <thead>
+      <tr>
+        <th>Clave</th><th>Grupo</th><th>Materia</th><th>Horario</th>
+        <th>L</th><th>M</th><th>I</th><th>J</th><th>V</th>
+        <th>Catedrático</th><th>% Req.</th><th>Requisitos</th><th>Correq.</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>C16</td><td>B</td><td>DESARROLLO EN ANDROID</td><td><span class="hh">15:00-16:00</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="aula">19K</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td>GIL VAZQUEZ LUIS FERNANDO</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C11</td><td>A</td><td>BASES DE DATOS II</td><td><span class="hh">10:00-11:00</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="aula">12B</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td>MARTINEZ SOTO ELENA</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C09</td><td>C</td><td>INGENIERIA DE SOFTWARE</td><td><span class="hh">08:00-09:00</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="aula">08A</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td>RAMIREZ CASTRO JORGE</td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C14</td><td>A</td><td>CALCULO DIFERENCIAL</td><td><span class="hh">09:00-10:00</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="aula">05C</span></td>
+        <td>RAMIREZ CASTRO JORGE</td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>E11</td><td>A</td><td>TALLER DE ETICA</td><td><span class="hh">11:00-12:00</span></td>
+        <td><span class="aula">03A</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td>MARTINEZ SOTO ELENA</td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="chip">C11</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+      <tr>
+        <td>C18</td><td>B</td><td>REDES DE COMPUTADORAS</td><td><span class="hh">13:00-14:00</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="aula">20L</span></td>
+        <td>GIL VAZQUEZ LUIS FERNANDO</td>
+        <td><span class="pct">60%</span></td>
+        <td><span class="libre">&middot;</span></td>
+        <td><span class="libre">&middot;</span></td>
+      </tr>
+    </tbody>
   </table>
 </body>
 </html>
