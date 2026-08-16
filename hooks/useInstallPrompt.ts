@@ -8,6 +8,16 @@ export function useInstallPrompt() {
   const [platform, setPlatform] = useState<Platform>(null);
 
   useEffect(() => {
+    // Si ya se abrió como PWA instalada no tiene caso seguir invitando a
+    // instalarla. iOS no soporta la media query estándar y expone su
+    // propio flag (navigator.standalone); el resto de navegadores sí
+    // respetan "display-mode: standalone" una vez instalada la PWA.
+    const isStandalone =
+      (window.navigator as Navigator & { standalone?: boolean })
+        .standalone === true ||
+      window.matchMedia("(display-mode: standalone)").matches;
+    if (isStandalone) return;
+
     // Detección de plataforma solo puede correr en cliente (userAgent no
     // existe en SSR); se hace en el efecto a propósito para evitar un
     // hydration mismatch entre el render del servidor y el del navegador.
