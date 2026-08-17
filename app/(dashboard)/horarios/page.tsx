@@ -136,6 +136,9 @@ export default function SimuladorHorarioPage() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [feedbackVariant, setFeedbackVariant] =
     useState<SnackbarVariant>("success");
+  const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("all");
   const [semestreFilter, setSemestreFilter] = useState("all");
@@ -161,6 +164,12 @@ export default function SimuladorHorarioPage() {
     }
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+    };
   }, []);
 
   // Ya no se muestran las materias cursadas en el catálogo — para eso está
@@ -264,9 +273,16 @@ export default function SimuladorHorarioPage() {
       ? `${horaDesde ? `${horaDesde}:00` : "…"}–${horaHasta ? `${horaHasta}:00` : "…"}`
       : "Horario";
 
+  // El Snackbar no se oculta solo — si no se limpia acá, el último
+  // mensaje se queda pegado en pantalla para siempre. Se guarda el
+  // timeout en un ref para poder cancelarlo si llega feedback nuevo
+  // antes de que termine (si no, un mensaje nuevo podría ocultarse de
+  // golpe por el timeout del mensaje anterior).
   function showFeedback(message: string, variant: SnackbarVariant) {
     setFeedback(message);
     setFeedbackVariant(variant);
+    if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+    feedbackTimeoutRef.current = setTimeout(() => setFeedback(null), 3000);
   }
 
   // Un solo toggle para agregar/quitar — clic en cualquier parte de la
