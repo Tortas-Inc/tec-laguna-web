@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { QueryError } from "@/components/QueryError";
 import { StatTile } from "@/components/StatTile";
+import { useSessionExpiredRedirect } from "@/hooks/useSessionExpiredRedirect";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 const rowMotion = (index: number) => ({
@@ -15,7 +16,12 @@ const rowMotion = (index: number) => ({
 });
 
 export default function KardexPage() {
-  const { data, isLoading, isError, error } = useKardex();
+  const { data, isLoading, isError, error, dataUpdatedAt } = useKardex();
+  const { suppressError } = useSessionExpiredRedirect({
+    isError,
+    error,
+    dataUpdatedAt,
+  });
 
   return (
     <>
@@ -24,7 +30,9 @@ export default function KardexPage() {
       {isLoading ? (
         <p className="text-sm text-brand-gray">Cargando…</p>
       ) : null}
-      {isError ? <QueryError message={error.message} /> : null}
+      {isError && !suppressError ? (
+        <QueryError message={error.message} />
+      ) : null}
 
       {data ? (
         <>

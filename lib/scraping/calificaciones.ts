@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import { ITL_STATUS_BASE } from "./constants";
 import { itlCookieHeader } from "./itl-fetch";
+import { SessionExpiredError } from "./session-expired-error";
 import { cleanText } from "./text";
 
 export type MateriaCalificacion = {
@@ -25,8 +26,11 @@ export type CalificacionesResult = {
 export function parseCalificaciones(html: string): CalificacionesResult {
   const $ = cheerio.load(html);
   const tables = $("table");
+  // Con sesión viva, StatusAlumno siempre responde esta estructura (tabla
+  // de encabezado + tabla de datos, aunque esta última venga sin filas) —
+  // si falta, el ITL ya no reconoce la sesión y mandó otra página.
   if (tables.length < 2) {
-    return { promedio: null, materias: [] };
+    throw new SessionExpiredError();
   }
 
   const materias: MateriaCalificacion[] = [];

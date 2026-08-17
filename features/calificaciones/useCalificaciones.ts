@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { fetchJson } from "@/lib/fetchJson";
 
 export type MateriaCalificacion = {
   grupo: string;
@@ -15,15 +16,11 @@ export type CalificacionesData = {
   materias: MateriaCalificacion[];
 };
 
-async function fetchCalificaciones(): Promise<CalificacionesData> {
-  const res = await fetch("/api/calificaciones");
-  if (!res.ok) {
-    const data = await res.json().catch(() => null);
-    throw new Error(
-      data?.error ?? "No pudimos conectar con el portal escolar",
-    );
-  }
-  return res.json();
+function fetchCalificaciones(): Promise<CalificacionesData> {
+  return fetchJson(
+    "/api/calificaciones",
+    "No pudimos conectar con el portal escolar",
+  );
 }
 
 export function useCalificaciones() {

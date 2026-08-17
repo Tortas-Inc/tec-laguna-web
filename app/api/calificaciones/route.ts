@@ -1,5 +1,6 @@
 import { fetchCalificaciones } from "@/lib/scraping/calificaciones";
 import { ITL_SESSION_COOKIE } from "@/lib/scraping/constants";
+import { SessionExpiredError } from "@/lib/scraping/session-expired-error";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -12,7 +13,10 @@ export async function GET() {
   try {
     const data = await fetchCalificaciones(sessionId);
     return NextResponse.json(data);
-  } catch {
+  } catch (error) {
+    if (error instanceof SessionExpiredError) {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
     return NextResponse.json(
       { error: "No pudimos conectar con el portal escolar" },
       { status: 502 },

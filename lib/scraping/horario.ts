@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import { ITL_STATUS_BASE } from "./constants";
 import { itlCookieHeader } from "./itl-fetch";
+import { SessionExpiredError } from "./session-expired-error";
 import { capitalizeWords, cleanText } from "./text";
 
 export type Materia = {
@@ -29,8 +30,11 @@ export function parseHorario(html: string): HorarioResult {
   );
 
   const tables = $("table");
+  // Con sesión viva, StatusAlumno siempre responde esta estructura (tabla
+  // de encabezado + tabla de datos, aunque esta última venga sin filas) —
+  // si falta, el ITL ya no reconoce la sesión y mandó otra página.
   if (tables.length < 2) {
-    return { studentName, materias: [] };
+    throw new SessionExpiredError();
   }
 
   const materias: Materia[] = [];
