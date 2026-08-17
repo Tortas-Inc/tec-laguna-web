@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { fetchJson } from "@/lib/fetchJson";
 
 export type MateriaKardex = {
   clave: string;
@@ -20,15 +21,8 @@ export type KardexData = {
   materias: MateriaKardex[];
 };
 
-async function fetchKardex(): Promise<KardexData> {
-  const res = await fetch("/api/kardex");
-  if (!res.ok) {
-    const data = await res.json().catch(() => null);
-    throw new Error(
-      data?.error ?? "No pudimos conectar con el portal escolar",
-    );
-  }
-  return res.json();
+function fetchKardex(): Promise<KardexData> {
+  return fetchJson("/api/kardex", "No pudimos conectar con el portal escolar");
 }
 
 export function useKardex({ enabled = true }: { enabled?: boolean } = {}) {

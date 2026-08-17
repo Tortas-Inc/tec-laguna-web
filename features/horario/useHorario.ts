@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { fetchJson } from "@/lib/fetchJson";
 
 export type Materia = {
   grupo: string;
@@ -63,15 +64,8 @@ export function buildWeekGrid(materias: Materia[]): WeekGridRow[] {
     }));
 }
 
-async function fetchHorario(): Promise<HorarioData> {
-  const res = await fetch("/api/horario");
-  if (!res.ok) {
-    const data = await res.json().catch(() => null);
-    throw new Error(
-      data?.error ?? "No pudimos conectar con el portal escolar",
-    );
-  }
-  return res.json();
+function fetchHorario(): Promise<HorarioData> {
+  return fetchJson("/api/horario", "No pudimos conectar con el portal escolar");
 }
 
 export function useHorario() {

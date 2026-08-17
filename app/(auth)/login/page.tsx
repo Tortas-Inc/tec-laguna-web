@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import Lottie from "lottie-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, X } from "lucide-react";
 import loginAnimation from "@/public/lottie/login.json";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { GUEST_MODE_KEY } from "@/lib/guestMode";
@@ -41,8 +41,19 @@ async function login({ controlNumber, password }: LoginInput): Promise<void> {
 }
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const expired = searchParams.get("expired") === "1";
   const [showPassword, setShowPassword] = useState(false);
+  const [expiredDismissed, setExpiredDismissed] = useState(false);
 
   const mutation = useMutation({
     mutationFn: login,
@@ -107,6 +118,23 @@ export default function LoginPage() {
           >
             {mutation.error.message}
           </motion.p>
+        ) : expired && !expiredDismissed ? (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: EASE }}
+            className="mb-3 flex items-start gap-2 rounded-[10px] bg-danger-tint px-3.5 py-2.5 text-[13px] font-semibold text-danger"
+          >
+            <p className="flex-1">Tu sesión expiró — vuelve a iniciar sesión.</p>
+            <button
+              type="button"
+              onClick={() => setExpiredDismissed(true)}
+              aria-label="Cerrar aviso"
+              className="flex-none text-danger/70 transition-colors duration-150 hover:text-danger"
+            >
+              <X className="h-4 w-4" strokeWidth={1.8} />
+            </button>
+          </motion.div>
         ) : null}
 
         <motion.div variants={item}>

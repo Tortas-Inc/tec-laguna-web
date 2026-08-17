@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import { ITL_STATUS_BASE } from "./constants";
 import { itlCookieHeader } from "./itl-fetch";
+import { SessionExpiredError } from "./session-expired-error";
 import { capitalizeWords, cleanText } from "./text";
 
 // Mismo listado y orden que Kardex.LIST_OF_CARRERAS en el modelo de dominio
@@ -56,8 +57,12 @@ export function parseKardex(html: string): KardexResult {
   const promedio = cleanText($("#MainContent_Label1").text());
 
   const tables = $("table");
+  // Con sesión viva, StatusAlumno siempre responde esta estructura (tabla
+  // de encabezado + tabla de datos, aunque esta última venga sin filas).
+  // Si falta, no es "kardex vacío" — es que el ITL ya no reconoce la
+  // sesión y mandó otra página distinta (típicamente su propio login).
   if (tables.length < 2) {
-    return { carrera, carreraCode, promedio, creditosTotales: 0, materias: [] };
+    throw new SessionExpiredError();
   }
 
   const materias: MateriaKardex[] = [];

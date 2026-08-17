@@ -4,6 +4,7 @@ import { parseHorariosCarrera } from "../horarios-carrera";
 import { getCarreraCode, parseKardex } from "../kardex";
 import { isLoginError } from "../login";
 import { parseHorario } from "../horario";
+import { SessionExpiredError } from "../session-expired-error";
 import {
   CALIFICACIONES_HTML,
   HORARIO_HTML,
@@ -29,6 +30,12 @@ describe("parseHorario", () => {
       viernes: "",
     });
   });
+
+  it("lanza SessionExpiredError si la página no trae la estructura esperada", () => {
+    expect(() => parseHorario("<html><body>otra página</body></html>")).toThrow(
+      SessionExpiredError,
+    );
+  });
 });
 
 describe("parseCalificaciones", () => {
@@ -45,6 +52,12 @@ describe("parseCalificaciones", () => {
     });
     // promedio(92, 87, 95) = 91.33... -> redondeado a 91 -> /10 = 9.1
     expect(result.promedio).toBe(9.1);
+  });
+
+  it("lanza SessionExpiredError si la página no trae la estructura esperada", () => {
+    expect(() =>
+      parseCalificaciones("<html><body>otra página</body></html>"),
+    ).toThrow(SessionExpiredError);
   });
 });
 
@@ -66,6 +79,12 @@ describe("parseKardex", () => {
       periodo2: "",
       periodo3: "",
     });
+  });
+
+  it("lanza SessionExpiredError si la página no trae la estructura esperada", () => {
+    expect(() => parseKardex("<html><body>otra página</body></html>")).toThrow(
+      SessionExpiredError,
+    );
   });
 });
 
