@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { InstallCta } from "@/components/InstallCta";
+import { DataSourceDisclaimer } from "@/components/DataSourceDisclaimer";
 import { Providers } from "./providers";
 
 const SITE_URL = "https://tec-laguna-app.com";
@@ -59,6 +60,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-full flex flex-col">
         <InstallCta />
+        <DataSourceDisclaimer />
         <Providers>{children}</Providers>
       </body>
     </html>
