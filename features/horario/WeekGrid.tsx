@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { CalendarX, X } from "lucide-react";
+import { X } from "lucide-react";
 import { motion } from "framer-motion";
 import { EmptyState } from "@/components/EmptyState";
 import { WeekGridRow } from "./useHorario";
@@ -46,7 +46,6 @@ export function WeekGrid({
   if (timeSlots.length === 0) {
     return (
       <EmptyState
-        icon={CalendarX}
         title={emptyTitle}
         description={emptyDescription}
       />

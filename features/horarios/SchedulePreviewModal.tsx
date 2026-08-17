@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { buildWeekGrid } from "@/features/horario/useHorario";
 import { WeekGrid } from "@/features/horario/WeekGrid";
 import { AnimatePresence, motion } from "framer-motion";
-import { Calendar, CalendarX, List, X } from "lucide-react";
+import { Calendar, List, X } from "lucide-react";
 import { MateriaHorarioCarrera } from "./useHorariosCarrera";
 
 type ViewMode = "calendar" | "list";
@@ -35,7 +35,6 @@ function ScheduleList({
   if (materias.length === 0) {
     return (
       <EmptyState
-        icon={CalendarX}
         title="Tu lista guía está vacía"
         description="Agrega materias desde la tabla para ver aquí cómo quedaría tu horario."
       />
