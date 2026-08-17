@@ -13,7 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { EmptyState } from "@/components/EmptyState";
 import { LoadingState } from "@/components/LoadingState";
@@ -27,7 +27,7 @@ import {
   useHorariosCarrera,
 } from "@/features/horarios/useHorariosCarrera";
 import { CARRERAS } from "@/features/horarios/carreras";
-import { startHour } from "@/features/horarios/schedule";
+import { getSemestre, sortSemesters, startHour } from "@/features/horarios/schedule";
 import { SchedulePreviewModal } from "@/features/horarios/SchedulePreviewModal";
 import {
   ADD_RESULT_MESSAGE,
@@ -59,6 +59,12 @@ function scheduleLabel(m: MateriaHorarioCarrera): string {
   if (!value) return "Sin horario";
   const match = value.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})\/(.+)$/);
   return match ? `${match[1]}–${match[2]} / ${match[3]}` : value;
+}
+
+// Electivas/Residencia/Tutoría se muestran tal cual; los semestres
+// numéricos (1..8) llevan el prefijo "Semestre".
+function semestreLabel(value: string): string {
+  return /^\d+$/.test(value) ? `Semestre ${value}` : value;
 }
 
 function matchesQuery(m: MateriaHorarioCarrera, query: string): boolean {
@@ -132,6 +138,7 @@ export default function SimuladorHorarioPage() {
     useState<SnackbarVariant>("success");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("all");
+  const [semestreFilter, setSemestreFilter] = useState("all");
   const [horaDesde, setHoraDesde] = useState("");
   const [horaHasta, setHoraHasta] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
@@ -172,16 +179,49 @@ export default function SimuladorHorarioPage() {
     });
   }, [pendientes, statusFilter, isAdded]);
 
+  // Semestres disponibles en la carrera actual (antes de aplicar el
+  // propio filtro de semestre), para no ofrecer opciones vacías.
+  const availableSemesters = useMemo(() => {
+    const set = new Set(pendientes.map((m) => getSemestre(m)));
+    return sortSemesters(Array.from(set));
+  }, [pendientes]);
+
+  // Degradados a los costados de los chips de semestre, para insinuar
+  // que hay más opciones scrolleables — solo del lado que de verdad
+  // tiene contenido oculto todavía.
+  const semestreScrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateSemestreScrollShadows = useCallback(() => {
+    const el = semestreScrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    updateSemestreScrollShadows();
+    window.addEventListener("resize", updateSemestreScrollShadows);
+    return () =>
+      window.removeEventListener("resize", updateSemestreScrollShadows);
+  }, [availableSemesters, updateSemestreScrollShadows]);
+
+  const semestreFiltered = useMemo(() => {
+    if (semestreFilter === "all") return statusFiltered;
+    return statusFiltered.filter((m) => getSemestre(m) === semestreFilter);
+  }, [statusFiltered, semestreFilter]);
+
   const horaFiltered = useMemo(() => {
-    if (!horaDesde && !horaHasta) return statusFiltered;
-    return statusFiltered.filter((m) => {
+    if (!horaDesde && !horaHasta) return semestreFiltered;
+    return semestreFiltered.filter((m) => {
       const hour = startHourNumber(m);
       if (hour === null) return false;
       if (horaDesde && hour < Number(horaDesde)) return false;
       if (horaHasta && hour > Number(horaHasta)) return false;
       return true;
     });
-  }, [statusFiltered, horaDesde, horaHasta]);
+  }, [semestreFiltered, horaDesde, horaHasta]);
 
   const filteredMaterias = useMemo(() => {
     return horaFiltered.filter((m) => matchesQuery(m, query));
@@ -488,6 +528,52 @@ export default function SimuladorHorarioPage() {
                 </motion.button>
               </div>
             </div>
+
+            {availableSemesters.length > 0 ? (
+              <div className="relative mt-2.5">
+                <div
+                  ref={semestreScrollRef}
+                  onScroll={updateSemestreScrollShadows}
+                  className="flex gap-2 overflow-x-auto pb-1"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setSemestreFilter("all")}
+                    className={`flex-none rounded-full px-3.5 py-2 text-sm font-semibold transition-colors duration-150 ${
+                      semestreFilter === "all"
+                        ? "bg-brand-black text-background"
+                        : "bg-brand-gray-lighter text-brand-black hover:bg-brand-primary-tint"
+                    }`}
+                  >
+                    Todos
+                  </button>
+                  {availableSemesters.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setSemestreFilter(s)}
+                      className={`flex-none rounded-full px-3.5 py-2 text-sm font-semibold transition-colors duration-150 ${
+                        semestreFilter === s
+                          ? "bg-brand-black text-background"
+                          : "bg-brand-gray-lighter text-brand-black hover:bg-brand-primary-tint"
+                      }`}
+                    >
+                      {semestreLabel(s)}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Degradados que insinúan que hay más chips fuera de
+                    vista — solo se muestran del lado que todavía tiene
+                    contenido por scrollear. */}
+                {canScrollLeft ? (
+                  <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-background to-transparent" />
+                ) : null}
+                {canScrollRight ? (
+                  <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent" />
+                ) : null}
+              </div>
+            ) : null}
           </>
         ) : null}
       </PageHeader>
@@ -546,7 +632,7 @@ export default function SimuladorHorarioPage() {
           />
         ) : (
           <motion.div
-            key={`${statusFilter}-${horaDesde}-${horaHasta}-${query}`}
+            key={`${statusFilter}-${semestreFilter}-${horaDesde}-${horaHasta}-${query}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
@@ -565,10 +651,10 @@ export default function SimuladorHorarioPage() {
                       isSelected
                         ? "cursor-pointer border-brand-green/30 bg-brand-green-tint"
                         : isBlocked
-                          ? "cursor-not-allowed border-brand-gray-lighter opacity-50"
+                          ? "cursor-not-allowed border-divider opacity-50"
                           : timeConflict
                             ? "cursor-pointer border-danger/30 bg-danger-tint"
-                            : "cursor-pointer border-brand-gray-lighter active:bg-brand-primary-tint"
+                            : "cursor-pointer border-divider active:bg-brand-primary-tint"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
