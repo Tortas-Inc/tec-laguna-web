@@ -1,7 +1,6 @@
 "use client";
 
 import { useCalificaciones } from "@/features/calificaciones/useCalificaciones";
-import { ClipboardX } from "lucide-react";
 import { motion } from "framer-motion";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
@@ -44,7 +43,6 @@ export default function CalificacionesPage() {
 
           {data.materias.length === 0 ? (
             <EmptyState
-              icon={ClipboardX}
               title="Todavía no hay calificaciones"
               description="Cuando el portal escolar publique tus calificaciones del semestre, aparecerán aquí."
             />

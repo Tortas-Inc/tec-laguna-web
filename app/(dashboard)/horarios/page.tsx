@@ -8,7 +8,6 @@ import {
   Plus,
   RefreshCw,
   Search,
-  SearchX,
   SlidersHorizontal,
   Trash2,
   X,
@@ -542,7 +541,6 @@ export default function SimuladorHorarioPage() {
       {horarios.data ? (
         filteredMaterias.length === 0 ? (
           <EmptyState
-            icon={SearchX}
             title="No encontramos materias"
             description="Ajusta la búsqueda o los filtros e intenta de nuevo."
           />

@@ -1,7 +1,6 @@
 "use client";
 
 import { useKardex } from "@/features/kardex/useKardex";
-import { BookX } from "lucide-react";
 import { motion } from "framer-motion";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
@@ -40,7 +39,6 @@ export default function KardexPage() {
 
           {data.materias.length === 0 ? (
             <EmptyState
-              icon={BookX}
               title="Todavía no hay kardex disponible"
               description="Cuando el portal escolar tenga datos de tu historial académico, aparecerán aquí."
             />
