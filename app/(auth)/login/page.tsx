@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import Lottie from "lottie-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { Eye, EyeOff } from "lucide-react";
 import loginAnimation from "@/public/lottie/login.json";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { GUEST_MODE_KEY } from "@/lib/guestMode";
@@ -40,6 +42,7 @@ async function login({ controlNumber, password }: LoginInput): Promise<void> {
 
 export default function LoginPage() {
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
 
   const mutation = useMutation({
     mutationFn: login,
@@ -121,20 +124,47 @@ export default function LoginPage() {
           />
         </motion.div>
 
-        <motion.div variants={item}>
+        <motion.div variants={item} className="relative mb-3">
           <label htmlFor="password" className="sr-only">
             Contraseña
           </label>
           <input
             id="password"
             name="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="Contraseña"
             autoComplete="current-password"
             required
             disabled={mutation.isPending || mutation.isSuccess}
-            className="mb-3 w-full rounded-[10px] bg-brand-primary-tint px-3.5 py-3 text-[15px] text-brand-black outline-none placeholder:text-brand-black/50 disabled:opacity-60"
+            className="w-full rounded-[10px] bg-brand-primary-tint px-3.5 py-3 pr-11 text-[15px] text-brand-black outline-none placeholder:text-brand-black/50 disabled:opacity-60"
           />
+          <motion.button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            whileTap={{ scale: 0.88 }}
+            disabled={mutation.isPending || mutation.isSuccess}
+            aria-label={
+              showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+            }
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 overflow-hidden text-brand-black/50 transition-colors duration-150 hover:text-brand-black disabled:opacity-60"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={showPassword ? "eye-off" : "eye"}
+                initial={{ opacity: 0, rotate: -60, scale: 0.4 }}
+                animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                exit={{ opacity: 0, rotate: 60, scale: 0.4 }}
+                transition={{ duration: 0.18, ease: EASE }}
+                className="flex items-center justify-center"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-[18px] w-[18px]" strokeWidth={1.7} />
+                ) : (
+                  <Eye className="h-[18px] w-[18px]" strokeWidth={1.7} />
+                )}
+              </motion.span>
+            </AnimatePresence>
+          </motion.button>
         </motion.div>
 
         <motion.button
